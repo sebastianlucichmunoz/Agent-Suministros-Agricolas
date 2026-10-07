@@ -4,18 +4,16 @@ import pandas as pd
 from bson.binary import Binary
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor, Booster, DMatrix
+
 from src.config import settings
 from src.db import get_db
 from src.ml.features import FEATURES, build
+from src.api_clients.yfinance_client import AGRICULTURAL_COMMODITIES
 
-STABLE = {"USDT","USDC","DAI","FDUSD","USDE","USDS","PYUSD","TUSD","FRAX"}
-
-def is_stable(asset):
-    return bool(asset.get("is_stablecoin")) or str(asset.get("symbol","")).upper() in STABLE
-
-def sentiment_df(db, coin_id):
+def sentiment_df(db, asset_id):
+    """Obtiene el promedio diario del sentimiento de noticias asociadas al activo agrícola."""
     pipeline = [
-        {"$match": {"mentioned_coin_ids": coin_id}},
+        {"$match": {"mentioned_asset_ids": asset_id}},
         {"$project": {
             "day": {"$dateTrunc": {"date": "$published_at", "unit": "day", "timezone": "UTC"}},
             "sentiment_compound": 1
@@ -26,46 +24,35 @@ def sentiment_df(db, coin_id):
     rows = list(db.news.aggregate(pipeline))
     return pd.DataFrame([{"date": x["_id"], "sentiment_compound": x["sentiment_compound"]} for x in rows])
 
-
-def price_df(db, coin_id):
-    rows = list(db.price_history.find(
-        {"coin_id": coin_id, "source": {"$in": ["coingecko_market_chart", "mobula_asset_price_history"]}},
-        {"_id": 0, "date": 1, "price": 1}
-    ).sort("date", 1))
-    
-    if len(rows) >= getattr(settings, "model_min_rows", 30):
-        df = pd.DataFrame(rows).rename(columns={"price": "close"})
-        df["volume"] = 0.0
-        return df, "coingecko_market_chart"
-
+def price_df(db, asset_id):
+    """Carga las velas diarias OHLCV desde la colección 'ohlcv' en MongoDB Atlas."""
     rows = list(db.ohlcv.find(
-        {"coin_id": coin_id, "period": "1d"},
+        {"asset_id": asset_id, "period": "1d"},
         {"_id": 0, "timestamp": 1, "close": 1, "volume": 1}
     ).sort("timestamp", 1))
-    
+
     if len(rows) >= getattr(settings, "model_min_rows", 30):
         df = pd.DataFrame(rows).rename(columns={"timestamp": "date"})
-        return df, "coingecko_token_ohlcv"
+        return df, "yfinance_ohlcv"
 
     return pd.DataFrame(columns=["date", "close", "volume"]), "none"
 
-def train_one(coin_id):
+def train_one(asset_id):
+    """Entrena el modelo XGBoost para un commodity específico."""
     db = get_db()
-    asset = db.assets.find_one({"coin_id": coin_id}) or {}
-    if not asset:
-        return {"coin_id": coin_id, "status":"asset_not_found"}
-    if is_stable(asset):
-        return {"coin_id": coin_id, "status":"skipped_stablecoin"}
+    prices, source = price_df(db, asset_id)
 
-    prices, source = price_df(db, coin_id)
-    feat = build(prices, sentiment_df(db, coin_id), target=True)
-    if len(feat) < settings.model_min_rows:
-        return {"coin_id": coin_id, "status":"insufficient_history", "rows":len(feat)}
+    if prices.empty:
+        return {"asset_id": asset_id, "status": "no_data"}
 
-    split = int(len(feat)*0.8)
+    feat = build(prices, sentiment_df(db, asset_id), target=True)
+    if len(feat) < getattr(settings, "model_min_rows", 30):
+        return {"asset_id": asset_id, "status": "insufficient_history", "rows": len(feat)}
+
+    split = int(len(feat) * 0.8)
     train, test = feat.iloc[:split], feat.iloc[split:]
     if len(test) < 10:
-        return {"coin_id": coin_id, "status":"insufficient_test"}
+        return {"asset_id": asset_id, "status": "insufficient_test"}
 
     model = XGBRegressor(
         objective="reg:squarederror", n_estimators=500, max_depth=4,
@@ -77,8 +64,9 @@ def train_one(coin_id):
     y = test["target_close_next"]
     naive = test["close"].to_numpy()
 
-    mae = float(mean_absolute_error(y,pred))
+    mae = float(mean_absolute_error(y, pred))
     test_dates = pd.to_datetime(test["date"], utc=True)
+
     backtest = [
         {
             "date": dt.to_pydatetime(),
@@ -95,112 +83,156 @@ def train_one(coin_id):
     }
 
     metrics = {
-        "coin_id": coin_id,
-        "symbol": asset.get("symbol"),
+        "asset_id": asset_id,
         "trained_at": datetime.now(timezone.utc),
         "history_source": source,
         "training_rows": len(train),
         "test_rows": len(test),
         "mae": mae,
-        "rmse": float(np.sqrt(mean_squared_error(y,pred))),
-        "mape_pct": float(mean_absolute_percentage_error(y,pred)*100),
-        "r2": float(r2_score(y,pred)),
-        "naive_mae": float(mean_absolute_error(y,naive)),
+        "rmse": float(np.sqrt(mean_squared_error(y, pred))),
+        "mape_pct": float(mean_absolute_percentage_error(y, pred) * 100),
+        "r2": float(r2_score(y, pred)),
+        "naive_mae": float(mean_absolute_error(y, naive)),
         "feature_importance": feature_importance,
         "backtest": backtest,
     }
     metrics["beats_naive"] = metrics["mae"] < metrics["naive_mae"]
 
+    # Guardado binario del modelo en MongoDB
     raw = bytes(model.get_booster().save_raw(raw_format="json"))
-    db.models.update_one({"coin_id":coin_id},{"$set":{
-        "coin_id":coin_id, "symbol":asset.get("symbol"), "history_source":source,
-        "feature_columns":FEATURES, "model_type":"XGBRegressor",
-        "model_raw_json":Binary(raw), "trained_at":metrics["trained_at"],
-    }},upsert=True)
+    db.models.update_one(
+        {"asset_id": asset_id},
+        {"$set": {
+            "asset_id": asset_id,
+            "feature_columns": FEATURES,
+            "model_type": "XGBRegressor",
+            "model_raw_json": Binary(raw),
+            "trained_at": metrics["trained_at"],
+        }},
+        upsert=True
+    )
     db.model_metrics.insert_one(metrics)
-    return {"status":"trained", **metrics}
+    return {"status": "trained", **metrics}
 
 def train_all():
-    db = get_db()
-    ids = [x["coin_id"] for x in db.assets.find({"active_top_n":True},{"coin_id":1}).sort("rank",1)]
-    return [train_one(x) for x in ids]
+    """Entrena los modelos para todos los activos configurados en AGRICULTURAL_COMMODITIES."""
+    return [train_one(asset_id) for asset_id in AGRICULTURAL_COMMODITIES.keys()]
 
-def predict_one(coin_id):
+def predict_one(asset_id):
+    """
+    Genera la proyección autorregresiva paso a paso a 180 días con XGBoost
+    y actualiza la colección 'predictions' en MongoDB Atlas.
+    """
     db = get_db()
-    model_doc = db.models.find_one({"coin_id": coin_id})
+    model_doc = db.models.find_one({"asset_id": asset_id})
     if not model_doc:
-        return {"coin_id": coin_id, "status": "no_model"}
+        return {"asset_id": asset_id, "status": "no_model"}
     
-    asset = db.assets.find_one({"coin_id": coin_id}) or {}
-    prices, source = price_df(db, coin_id)
-    
-    snap = db.market_snapshots.find_one({"coin_id": coin_id}, sort=[("observed_at", -1)])
-    if snap and snap.get("price") is not None:
-        today = pd.Timestamp.now(tz="UTC").floor("D")
-        prices["date"] = pd.to_datetime(prices["date"], utc=True)
-        prices = prices[prices["date"].dt.floor("D") < today]
-        prices = pd.concat([prices, pd.DataFrame([{
-            "date": today, "close": float(snap["price"]),
-            "volume": float(snap.get("volume_24h") or 0)
-        }])], ignore_index=True)
+    prices, source = price_df(db, asset_id)
+    if prices.empty:
+        return {"asset_id": asset_id, "status": "no_prices"}
 
+    # Cargar el modelo entrenado
     booster = Booster()
     booster.load_model(bytearray(model_doc["model_raw_json"]))
     
-    predictions_15d = []
-    current_prices = prices.copy()
     now = datetime.now(timezone.utc)
     
-    for i in range(1, 16):  # Del día 1 al 15
-        feat = build(current_prices, sentiment_df(db, coin_id), target=False)
-        if feat.empty:
+    # Normalización de la columna de fecha a UTC para evitar errores de comparación tz-naive/tz-aware
+    current_history = prices.copy()
+    current_history["date"] = pd.to_datetime(current_history["date"], utc=True)
+    current_price = float(current_history["close"].iloc[-1])
+    
+    sentiment = sentiment_df(db, asset_id)
+    if not sentiment.empty and "date" in sentiment.columns:
+        sentiment["date"] = pd.to_datetime(sentiment["date"], utc=True)
+
+    predictions_horizon = []
+    
+    # Bucle Autorregresivo de 180 Días
+    for day in range(1, 181):
+        target_date = now + timedelta(days=day)
+        
+        # 1. Recalcular las variables/features con la historia actualizada
+        updated_feat = build(current_history, sentiment, target=False)
+        if updated_feat.empty:
             break
             
-        last = feat.iloc[-1]
-        X = pd.DataFrame([last[FEATURES].to_dict()])[FEATURES]
-        dmatrix = DMatrix(X, feature_names=FEATURES)
-        predicted = float(booster.predict(dmatrix)[0])
+        last_row = updated_feat.iloc[-1]
         
-        target_date = now + timedelta(days=i)
-        current_prices = pd.concat([current_prices, pd.DataFrame([{
-            "date": pd.Timestamp(target_date).floor("D"),
-            "close": predicted,
-            "volume": current_prices["volume"].iloc[-1] if not current_prices.empty else 0.0
-        }])], ignore_index=True)
+        # 2. Preparar vector de entrada para XGBoost
+        X_df = pd.DataFrame([last_row[FEATURES].to_dict()])[FEATURES]
+        dmatrix = DMatrix(X_df, feature_names=FEATURES)
         
-        predictions_15d.append({
-            "day": i,
+        # 3. Predicción del precio para el día t+1
+        pred_close = float(booster.predict(dmatrix)[0])
+        pred_close = max(pred_close, 0.01)  # Evitar valores negativos o nulos
+        
+        change_pct = ((pred_close - current_price) / current_price) * 100 if current_price else 0
+        
+        predictions_horizon.append({
+            "day": day,
             "target_time": target_date,
-            "predicted_close": predicted
+            "predicted_close": float(pred_close),
+            "change_pct": float(change_pct)
         })
+        
+        # 4. Alimentar el nuevo precio al histórico garantizando tz-awareness (UTC)
+        new_row = pd.DataFrame([{
+            "date": pd.to_datetime(target_date, utc=True),
+            "close": pred_close,
+            "volume": float(current_history["volume"].iloc[-1]) if "volume" in current_history else 0
+        }])
+        current_history = pd.concat([current_history, new_row], ignore_index=True)
 
-    if not predictions_15d:
-        return {"coin_id": coin_id, "status": "insufficient_features"}
+    if not predictions_horizon:
+        return {"asset_id": asset_id, "status": "insufficient_features"}
 
-    current_price = float(prices["close"].iloc[-1])
-    final_pred = predictions_15d[-1]["predicted_close"]
-    pct = (final_pred / current_price - 1) * 100 if current_price else 0
-    t = settings.prediction_neutral_threshold_pct
+    final_pred = predictions_horizon[-1]["predicted_close"]
+    pct = ((final_pred / current_price) - 1) * 100 if current_price else 0
+    
+    t = getattr(settings, "prediction_neutral_threshold_pct", 2.5)
     trend = "ALCISTA" if pct > t else ("BAJISTA" if pct < -t else "ESTABLE")
 
+    # Extracción de picos y valles proyectados
+    max_item = max(predictions_horizon, key=lambda x: x["predicted_close"])
+    min_item = min(predictions_horizon, key=lambda x: x["predicted_close"])
+
     doc = {
-        "coin_id": coin_id,
-        "symbol": asset.get("symbol"),
+        "asset_id": asset_id,
         "predicted_at": now,
         "current_price": current_price,
-        "predictions_15d": predictions_15d,  # Aquí guardas la ruta de los 15 días
-        "predicted_close_15d": final_pred,
+        "predictions_180d": predictions_horizon,
+        "predicted_close_180d": final_pred,
         "predicted_change_pct": float(pct),
         "trend": trend,
+        "agent_summary": {
+            "max_peak": {
+                "day": int(max_item["day"]),
+                "date": max_item["target_time"],
+                "price": float(max_item["predicted_close"]),
+                "change_pct": float(max_item["change_pct"])
+            },
+            "min_valley": {
+                "day": int(min_item["day"]),
+                "date": min_item["target_time"],
+                "price": float(min_item["predicted_close"]),
+                "change_pct": float(min_item["change_pct"])
+            }
+        },
         "history_source": source,
         "model_trained_at": model_doc.get("trained_at"),
-        "sentiment_compound": float(feat.iloc[-1].get("sentiment_compound", 0)),
+        "sentiment_compound": float(sentiment["sentiment_compound"].iloc[-1]) if not sentiment.empty else 0.0,
     }
     
-    db.predictions.insert_one(doc)
+    # Guardar/Actualizar en la colección predictions de MongoDB
+    db.predictions.update_one(
+        {"asset_id": asset_id},
+        {"$set": doc},
+        upsert=True
+    )
     return {"status": "predicted", **doc}
 
 def predict_all():
-    db = get_db()
-    return [predict_one(x["coin_id"]) for x in db.models.find({},{"coin_id":1})]
-
+    """Genera predicciones recorriendo todos los activos configurados."""
+    return [predict_one(asset_id) for asset_id in AGRICULTURAL_COMMODITIES.keys()]

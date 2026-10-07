@@ -7,8 +7,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from datetime import datetime, timezone
 from src.db import ensure_indexes, log_run
-from src.etl.market import refresh_market
-from src.etl.history import load_price_history, load_ohlcv
+from src.etl.history import load_ohlcv
 from src.etl.news import refresh_news
 from src.ml.model import train_all, predict_all
 
@@ -17,37 +16,26 @@ if __name__ == "__main__":
     details = {}
     try:
         ensure_indexes()
-        print("1/6 Mercado")
-        details["market"] = refresh_market()
-        print(details["market"])
-
-        print("2/6 Histórico")
-        details["history"] = load_price_history()
-        print(details["history"])
-
-        print("3/6 OHLCV")
-        try:
-            details["ohlcv"] = load_ohlcv()
-        except Exception as exc:
-            details["ohlcv"] = {"warning":str(exc)}
+        print("1/4 Cargando OHLCV Histórico de Commodities (Yahoo Finance)...")
+        details["ohlcv"] = load_ohlcv(period="1y")
         print(details["ohlcv"])
 
-        print("4/6 Noticias")
+        print("2/4 Noticias Agrícolas...")
         details["news"] = refresh_news()
         print(details["news"])
 
-        print("5/6 XGBoost")
+        print("3/4 Entrenando Modelos XGBoost...")
         trained = train_all()
-        details["models_trained"] = sum(x.get("status")=="trained" for x in trained)
-        print("Modelos:",details["models_trained"])
+        details["models_trained"] = sum(x.get("status") == "trained" for x in trained)
+        print("Modelos entrenados:", details["models_trained"])
 
-        print("6/6 Predicciones")
+        print("4/4 Generando Predicciones...")
         preds = predict_all()
-        details["predictions"] = sum(x.get("status")=="predicted" for x in preds)
-        print("Predicciones:",details["predictions"])
+        details["predictions"] = sum(x.get("status") == "predicted" for x in preds)
+        print("Predicciones:", details["predictions"])
 
-        log_run("bootstrap","success",started,details)
-        print("Bootstrap finalizado.")
+        log_run("bootstrap", "success", started, details)
+        print("Bootstrap Agro finalizado con éxito.")
     except Exception as exc:
-        log_run("bootstrap","error",started,details,str(exc))
+        log_run("bootstrap", "error", started, details, str(exc))
         raise

@@ -1,68 +1,73 @@
 import json
-import os
+import numpy as np
 from datetime import datetime, timedelta, timezone
 from src.db import get_db
 
-def extraer_datos_consolidados():
+def extraer_picos_y_muestras(predictions_180d, step=30):
+    
+    if not predictions_180d:
+        return []
+
+    max_peak = max(predictions_180d, key=lambda x: x["predicted_close"])
+    min_valley = min(predictions_180d, key=lambda x: x["predicted_close"])
+
+    puntos_clave = {
+        max_peak["day"]: {**max_peak, "tipo": "Pico Máximo"},
+        min_valley["day"]: {**min_valley, "tipo": "Valle Mínimo"}
+    }
+
+    for p in predictions_180d:
+        if p["day"] % step == 0 and p["day"] not in puntos_clave:
+            puntos_clave[p["day"]] = {**p, "tipo": f"Hito de Proyección"}
+
+    puntos_ordenados = sorted(puntos_clave.values(), key=lambda x: x["day"])
+
+    return [
+        {
+            "tipo": item["tipo"],
+            "fecha": str(item["target_time"])[:10],  # Formato YYYY-MM-DD
+            "precio_proyectado": round(float(item["predicted_close"]), 2),
+            "variacion_pct": round(float(item["change_pct"]), 2)
+        }
+        for item in puntos_ordenados
+    ]
+
+def extraer_datos_consolidados_agricolas():
     """
-    Extrae las últimas predicciones y el sentimiento de noticias de MongoDB Atlas
-    en solo 2 consultas optimizadas.
+    Extrae las predicciones autorregresivas desde db.predictions,
+    comprime los puntos clave por fecha y guarda el lote en db.market_summary.
     """
     db = get_db()
-    
-    pipeline_preds = [
-        {"$sort": {"predicted_at": -1}},
-        {
-            "$group": {
-                "_id": "$coin_id",
-                "symbol": {"$first": "$symbol"},
-                "current_price": {"$first": "$current_price"},
-                "predicted_close_15d": {"$first": {"$arrayElemAt": ["$predictions_15d.predicted_close", 0]}},
-                "predicted_at": {"$first": "$predicted_at"}
-            }
-        }
-    ]
-    preds_raw = list(db.predictions.aggregate(pipeline_preds))
+    preds_raw = list(db.predictions.find({}, {"_id": 0}))
     
     mercado_consolidado = {}
+    
     for p in preds_raw:
-        coin_id = p["_id"]
-        current_price = float(p.get("current_price") or 0.0)
+        asset_id = p.get("asset_id")
+        current_price = float(p.get("current_price", 0.0))
+        predicted_close_180d = float(p.get("predicted_close_180d", current_price))
+        predicted_change_pct = float(p.get("predicted_change_pct", 0.0))
+        puntos_clave = extraer_picos_y_muestras(p.get("predictions_180d", []))
         
-        raw_pred = p.get("predicted_close_15d")
-        pred_close = float(raw_pred) if raw_pred is not None else current_price
-        
-        if current_price > 0:
-            predicted_change_pct = ((pred_close - current_price) / current_price) * 100
-        else:
-            predicted_change_pct = 0.0
-
-        if predicted_change_pct > 0.5:
-            trend = "ALCISTA"
-        elif predicted_change_pct < -0.5:
-            trend = "BAJISTA"
-        else:
-            trend = "ESTABLE"
-
-        mercado_consolidado[coin_id] = {
-            "coin_id": coin_id,
-            "symbol": p.get("symbol", ""),
-            "current_price": current_price,
-            "predicted_close_24h": round(pred_close, 4),
-            "predicted_change_pct": round(predicted_change_pct, 4),
-            "trend": trend,
-            "predicted_at": str(p.get("predicted_at", "")),
+        mercado_consolidado[asset_id] = {
+            "asset_id": asset_id,
+            "current_price": round(current_price, 2),
+            "predicted_close_180d": round(predicted_close_180d, 2),
+            "predicted_change_pct": round(predicted_change_pct, 2),
+            "trend": p.get("trend", "ESTABLE"),
+            "puntos_clave_fechas": puntos_clave,
             "sentiment_compound": 0.0,
             "sentiment_label": "NEUTRAL",
             "news_count": 0
         }
 
-    hace_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+    hace_7d = datetime.now(timezone.utc) - timedelta(days=7)
     pipeline_news = [
-        {"$match": {"published_at": {"$gte": hace_24h}}},
+        {"$match": {"published_at": {"$gte": hace_7d}}},
+        {"$unwind": "$mentioned_asset_ids"},
         {
             "$group": {
-                "_id": "$coin_id",
+                "_id": "$mentioned_asset_ids",
                 "avg_compound": {"$avg": "$sentiment_compound"},
                 "news_count": {"$sum": 1}
             }
@@ -71,11 +76,11 @@ def extraer_datos_consolidados():
     news_raw = list(db.news.aggregate(pipeline_news))
     
     for n in news_raw:
-        coin_id = n["_id"]
-        if coin_id in mercado_consolidado:
+        asset_id = n["_id"]
+        if asset_id in mercado_consolidado:
             compound = float(n.get("avg_compound", 0.0))
-            mercado_consolidado[coin_id]["sentiment_compound"] = round(compound, 4)
-            mercado_consolidado[coin_id]["news_count"] = n.get("news_count", 0)
+            mercado_consolidado[asset_id]["sentiment_compound"] = round(compound, 4)
+            mercado_consolidado[asset_id]["news_count"] = n.get("news_count", 0)
             
             if compound >= 0.05:
                 label = "POSITIVO"
@@ -83,14 +88,14 @@ def extraer_datos_consolidados():
                 label = "NEGATIVO"
             else:
                 label = "NEUTRAL"
-            mercado_consolidado[coin_id]["sentiment_label"] = label
+            mercado_consolidado[asset_id]["sentiment_label"] = label
 
     datos_finales = list(mercado_consolidado.values())
 
     try:
         for item in datos_finales:
             db.market_summary.update_one(
-                {"coin_id": item["coin_id"]},
+                {"asset_id": item["asset_id"]},
                 {
                     "$set": {
                         **item,
@@ -99,13 +104,11 @@ def extraer_datos_consolidados():
                 },
                 upsert=True
             )
-        print(f"¡Éxito! {len(datos_finales)} registros actualizados en 'market_summary'.")
+        print(f"¡Éxito! {len(datos_finales)} activos procesados y almacenados en 'market_summary'.")
     except Exception as e:
-        print(f"Error al guardar en MongoDB: {e}")
+        print(f"Error al guardar en 'market_summary': {e}")
 
     return datos_finales
 
 if __name__ == "__main__":
-    datos = extraer_datos_consolidados()
-    print(f"Extracción completada. {len(datos)} monedas extraídas.")
-
+    extraer_datos_consolidados_agricolas()

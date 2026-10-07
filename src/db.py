@@ -25,22 +25,21 @@ def ping():
 
 def ensure_indexes():
     db = get_db()
-    db.assets.create_index("coin_id", unique=True)
-    db.assets.create_index([("rank", ASCENDING)])
-    db.market_snapshots.create_index([("coin_id", ASCENDING), ("observed_at", DESCENDING)])
-    db.mobula_snapshots.create_index([("coin_id", ASCENDING), ("observed_at", DESCENDING)])
-    db.price_history.create_index(
-        [("coin_id", ASCENDING), ("date", ASCENDING), ("source", ASCENDING)], unique=True
-    )
+    db.assets.create_index("asset_id", unique=True)
     db.ohlcv.create_index(
-        [("coin_id", ASCENDING), ("timestamp", ASCENDING), ("period", ASCENDING), ("source", ASCENDING)],
+        [("asset_id", ASCENDING), ("timestamp", ASCENDING), ("period", ASCENDING)],
         unique=True,
     )
+
     db.news.create_index("news_id", unique=True)
     db.news.create_index([("published_at", DESCENDING)])
-    db.models.create_index("coin_id", unique=True)
-    db.model_metrics.create_index([("coin_id", ASCENDING), ("trained_at", DESCENDING)])
-    db.predictions.create_index([("coin_id", ASCENDING), ("predicted_at", DESCENDING)])
+    db.models.create_index("asset_id", unique=True)
+    db.model_metrics.create_index([("asset_id", ASCENDING), ("trained_at", DESCENDING)])
+    db.predictions.create_index([("asset_id", ASCENDING), ("predicted_at", DESCENDING)])
+    db.agent_recommendations.create_index([("asset_id", ASCENDING), ("date", DESCENDING)])
+    db.agent_logs.create_index([("timestamp", DESCENDING)])
+    db.notification_logs.create_index([("sent_at", DESCENDING)])
+    db.clients.create_index("client_id", unique=True)
     db.pipeline_runs.create_index([("started_at", DESCENDING)])
 
 def log_run(name: str, status: str, started_at, details=None, error=None):
