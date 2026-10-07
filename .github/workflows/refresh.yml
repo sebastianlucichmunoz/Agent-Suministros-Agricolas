@@ -39,8 +39,7 @@ jobs:
 
       - run: python -m pip install -r requirements.txt
 
-      # PASO 1: Ingesta de datos de mercado y modelos predictivos. Ejecuta a las 07:00 y 18:00 UTC
-
+      # PASO 1: Ingesta de datos de mercado y modelos predictivos
       - name: PASO 1 - Actualizar datos de mercado y predicciones
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 7,18 * * *'))
         run: |
@@ -50,91 +49,12 @@ jobs:
             python scripts/refresh.py
           fi
 
-      # =========================================================
-      # PASO 2: Agente Dictaminador General (Gemini)
-      # Ejecuta ÚNICAMENTE 1 vez al día a las 05:00 UTC (y manual)
-      # =========================================================
+      # PASO 2: Agente Dictaminador General 
       - name: PASO 2 - Generar Dictámenes Macro con Gemini
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 5 * * *')
-        run: python -m src.agents.recommendation_agent
+        run: python -m src.agents.batch_agent
 
-      # =========================================================
       # PASO 3: Agente de Notificaciones y Envío de Correos
-      # Ejecuta 1 vez al día a las 08:00 UTC (y manual)
-      # =========================================================
       - name: PASO 3 - Orquestar Alertas Agrícolas y Correos (run_agro_alerts)
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * *')
         run: python -m src.agents.run_agro_alerts
-
-# name: Crypto Analytics - Refresh
-
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       daily:
-#         description: "Historico + reentrenamiento"
-#         required: false
-#         default: "false"
-#   schedule:
-#     - cron: "0 0 * * *"
-#     - cron: "0 12 * * *"
-#     - cron: "0 13 * * *"
-
-# jobs:
-#   refresh:
-#     runs-on: ubuntu-latest
-#     timeout-minutes: 30
-
-#     env:
-#       MONGODB_URI: ${{ secrets.MONGODB_URI }}
-#       MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
-#       COINSTATS_API_KEY: ${{ secrets.COINSTATS_API_KEY }}
-#       MOBULA_API_KEY: ${{ secrets.MOBULA_API_KEY }}
-#       COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-#       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-#       SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-#       SMTP_PORT: ${{ secrets.SMTP_PORT }}
-#       SMTP_USER: ${{ secrets.SMTP_USER }}
-#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-#       TOP_N: "20"
-#       HISTORY_DAYS: "365"
-#       MODEL_MIN_ROWS: "180"
-
-#     steps:
-#       - uses: actions/checkout@v4
-
-#       - uses: actions/setup-python@v5
-#         with:
-#           python-version: "3.12"
-#           cache: "pip"
-
-#       - run: python -m pip install -r requirements.txt
-
-#       # Ingesta de datos y modelos 
-#       - name: Actualizar datos de mercado y predicciones
-#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 0 * * *' || github.event.schedule == '0 12 * * *'))
-#         run: |
-#           if [ "${{ inputs.daily }}" == "true" ]; then
-#             python scripts/refresh.py --daily
-#           else
-#             python scripts/refresh.py
-#           fi
-
-#       # Agente Batch del Dashboard y su respectivo commit
-#       - name: Run Gemini Batch Agent
-#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 0 * * *' || github.event.schedule == '0 12 * * *'))
-#         run: python -m src.agents.batch_agent
-
-#       - name: Commit and push updated JSON
-#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 0 * * *' || github.event.schedule == '0 12 * * *'))
-#         run: |
-#           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-#           git config --local user.name "github-actions[bot]"
-#           git add data/daily_recommendations.json
-#           git commit -m "auto: update daily recommendations via Gemini [skip ci]" || exit 0
-#           git push
-
-#       # Agente de Notificaciones y Envío de Correo
-#       - name: Run Notification & Email Pipeline (Daily Alert)
-#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 13 * * *')
-#         run: python -m src.agents.run_pipeline
