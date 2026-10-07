@@ -4,9 +4,7 @@ from src.agents.notification_agent import ejecutar_agente_notificaciones
 from src.agents.email_sender import enviar_alertas_pendientes
 
 def ejecutar_flujo_alertas():
-    print(" ========================================================")
     print("INICIANDO FLUIDO DE NOTIFICACIONES AGRÍCOLAS")
-    print("========================================================\n")
     
     print("[PASO 1]: Evaluando watchlist de clientes y generando dictámenes...")
     ejecutar_agente_notificaciones()

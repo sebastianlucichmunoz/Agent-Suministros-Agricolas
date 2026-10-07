@@ -25,7 +25,6 @@ def build(prices, sentiment=None, target=True):
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
     df["volume"] = pd.to_numeric(df.get("volume", 0), errors="coerce").fillna(0)
 
-    # Retornos y Medias Móviles
     for n in (1, 3, 7, 14):
         df[f"return_{n}d"] = df["close"].pct_change(n)
     for n in (7, 14, 30):
@@ -45,7 +44,6 @@ def build(prices, sentiment=None, target=True):
     for n in (1, 2, 3, 7):
         df[f"lag_{n}"] = df["close"].shift(n)
 
-    # Sentimiento de Noticias Agrícolas
     df["sentiment_compound"] = 0.0
     if sentiment is not None and not sentiment.empty:
         sent = sentiment.copy()

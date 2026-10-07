@@ -98,7 +98,6 @@ def train_one(asset_id):
     }
     metrics["beats_naive"] = metrics["mae"] < metrics["naive_mae"]
 
-    # Guardado binario del modelo en MongoDB
     raw = bytes(model.get_booster().save_raw(raw_format="json"))
     db.models.update_one(
         {"asset_id": asset_id},
@@ -132,13 +131,11 @@ def predict_one(asset_id):
     if prices.empty:
         return {"asset_id": asset_id, "status": "no_prices"}
 
-    # Cargar el modelo entrenado
     booster = Booster()
     booster.load_model(bytearray(model_doc["model_raw_json"]))
     
     now = datetime.now(timezone.utc)
-    
-    # Normalización de la columna de fecha a UTC para evitar errores de comparación tz-naive/tz-aware
+ 
     current_history = prices.copy()
     current_history["date"] = pd.to_datetime(current_history["date"], utc=True)
     current_price = float(current_history["close"].iloc[-1])
@@ -148,25 +145,21 @@ def predict_one(asset_id):
         sentiment["date"] = pd.to_datetime(sentiment["date"], utc=True)
 
     predictions_horizon = []
-    
-    # Bucle Autorregresivo de 180 Días
+
     for day in range(1, 181):
         target_date = now + timedelta(days=day)
-        
-        # 1. Recalcular las variables/features con la historia actualizada
+      
         updated_feat = build(current_history, sentiment, target=False)
         if updated_feat.empty:
             break
             
         last_row = updated_feat.iloc[-1]
         
-        # 2. Preparar vector de entrada para XGBoost
         X_df = pd.DataFrame([last_row[FEATURES].to_dict()])[FEATURES]
         dmatrix = DMatrix(X_df, feature_names=FEATURES)
         
-        # 3. Predicción del precio para el día t+1
         pred_close = float(booster.predict(dmatrix)[0])
-        pred_close = max(pred_close, 0.01)  # Evitar valores negativos o nulos
+        pred_close = max(pred_close, 0.01)  
         
         change_pct = ((pred_close - current_price) / current_price) * 100 if current_price else 0
         
@@ -176,8 +169,7 @@ def predict_one(asset_id):
             "predicted_close": float(pred_close),
             "change_pct": float(change_pct)
         })
-        
-        # 4. Alimentar el nuevo precio al histórico garantizando tz-awareness (UTC)
+
         new_row = pd.DataFrame([{
             "date": pd.to_datetime(target_date, utc=True),
             "close": pred_close,
@@ -194,7 +186,6 @@ def predict_one(asset_id):
     t = getattr(settings, "prediction_neutral_threshold_pct", 2.5)
     trend = "ALCISTA" if pct > t else ("BAJISTA" if pct < -t else "ESTABLE")
 
-    # Extracción de picos y valles proyectados
     max_item = max(predictions_horizon, key=lambda x: x["predicted_close"])
     min_item = min(predictions_horizon, key=lambda x: x["predicted_close"])
 
@@ -224,8 +215,7 @@ def predict_one(asset_id):
         "model_trained_at": model_doc.get("trained_at"),
         "sentiment_compound": float(sentiment["sentiment_compound"].iloc[-1]) if not sentiment.empty else 0.0,
     }
-    
-    # Guardar/Actualizar en la colección predictions de MongoDB
+
     db.predictions.update_one(
         {"asset_id": asset_id},
         {"$set": doc},
