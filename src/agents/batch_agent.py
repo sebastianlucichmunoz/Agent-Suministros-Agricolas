@@ -57,78 +57,53 @@ def registrar_log_agente(
 
 def analizar_mercado_agricola_en_lote(lista_activos: list):
     prompt = f"""
-    Eres un analista especializado en mercados de materias primas agrícolas y asesor de compras para empresas, productores y comerciantes que adquieren insumos en grandes cantidades, incluso por toneladas.
+    Eres un asesor de compras especializado en productos agrícolas. Tu función es explicar cómo podrían cambiar sus precios y orientar al comprador para tomar mejores decisiones y reducir costos.
 
-    Tu objetivo es explicar cómo podrían evolucionar los precios y recomendar estrategias prácticas para reducir costos y riesgos de compra. Utiliza lenguaje claro, directo y accesible para personas sin conocimientos financieros especializados.
-
-    DATOS DE MERCADO
-
-    Analiza los siguientes {len(lista_activos)} activos. Los precios están expresados en dólares estadounidenses (USD) y su unidad comercial oficial se encuentra en 'display_label'.
+    DATOS DE MERCADO:
+    Analiza los {len(lista_activos)} activos. Los precios están en USD y su unidad oficial figura en 'display_label'.
 
     {json.dumps(lista_activos, ensure_ascii=False, indent=2)}
 
-    INSTRUCCIONES DE ANÁLISIS
+    INSTRUCCIONES:
 
-    1. BASE DEL ANÁLISIS
-    Fundamenta las conclusiones exclusivamente en los datos cuantitativos proporcionados: precios actuales e históricos, variaciones, indicadores numéricos y estimaciones del modelo. No incorpores noticias, titulares, artículos, opiniones de terceros, análisis textual externo ni indicadores de sentimiento como variables predictoras o evidencia para justificar las conclusiones. No atribuyas movimientos a causas externas que los datos no permitan demostrar.
+    1. ANÁLISIS: Utiliza exclusivamente los datos cuantitativos proporcionados. Evalúa el precio actual, su evolución histórica, las variaciones y las proyecciones disponibles. No utilices noticias, opiniones externas ni sentimiento del mercado.
+    2. PRECIOS Y FECHAS: Menciona el precio actual y su unidad comercial exacta. Explica cuánto podría subir o bajar, en dólares y porcentaje cuando sea posible, e identifica las fechas relevantes. No inventes datos ni conversiones. Presenta las proyecciones como estimaciones, nunca como certezas.
+    3. RECOMENDACIÓN DE COMPRA:
+    - COMPRAR_ANTICIPADO: si se prevé un encarecimiento relevante que justifique comprar antes.
+    - MANTENER: si las variaciones son pequeñas, inciertas o no justifican cambiar el momento de compra.
+    - POSTERGAR_COMPRAS: si se espera una reducción relevante y es razonable esperar sin comprometer el abastecimiento.
 
-    2. PRECIOS Y VARIACIONES
-    Para cada activo, identifica el precio actual, la tendencia general y los máximos y mínimos estimados, con sus fechas exactas, cuando estén disponibles. Calcula la variación respecto al precio actual en USD y porcentaje cuando existan datos suficientes.
+    Considera la magnitud del cambio, su duración, las posibles fluctuaciones intermedias y la incertidumbre. No recomiendes esperar únicamente porque el precio podría bajar si el ahorro sería mínimo o el riesgo de encarecimiento es importante. Si las señales son contradictorias, prioriza la prudencia.
 
-    Utiliza siempre 'display_label' para expresar la unidad comercial exacta. No inventes ni conviertas unidades, precios, fechas o valores faltantes.
+    4. REDACCIÓN CLARA Y AMIGABLE:
+    - En 'resumen_ejecutivo', comienza con el precio actual y explica, con palabras sencillas, qué podría ocurrir durante los próximos meses y cuándo convendría comprar.
+    - En 'justificacion', explica por qué recomiendas comprar ahora, esperar o dividir las compras. Traduce las variaciones en su impacto económico por unidad comercial y por volumen cuando se conozca.
+    - Evita palabras técnicas como "commodity", "pico", "valle", "tendencia alcista/bajista" dentro de las explicaciones. Utiliza expresiones como "el precio podría subir", "se espera una reducción" o "la variación sería pequeña". Es importante que todo se explique de forma amigable y práctica.
+    - Personaliza cada recomendación según los datos del producto. No asumas que el comprador tiene capacidad de almacenamiento, presupuesto disponible o libertad para aplazar sus compras.
+    - Si los cambios previstos son mínimos, indícalo claramente y explica si realmente vale la pena modificar el plan de compra.
 
-    3. EVOLUCIÓN ESPERADA
-    Explica cronológicamente cómo podría evolucionar el precio, utilizando fechas calendario con día, mes y año. Evita referencias como "día 30" o "en 60 días".
+    5. CLASIFICACIÓN:
+    - 'nivel_riesgo': exclusivamente "Bajo", "Medio" o "Alto", según la variabilidad y la incertidumbre, no por el precio en sí.
+    - 'tendencia': exclusivamente "ALCISTA", "BAJISTA" o "ESTABLE", según los datos cuantitativos. Si la evolución es contradictoria, no fuerces una conclusión.
 
-    Distingue entre tendencias generales y fluctuaciones puntuales. Presenta los máximos y mínimos como estimaciones sujetas a incertidumbre, nunca como resultados garantizados. No fuerces conclusiones cuando los datos sean insuficientes o contradictorios.
-
-    4. RECOMENDACIONES PRÁCTICAS
-    Selecciona una categoría interna según los datos:
-    - "COMPRAR ANTICIPADO": existe un riesgo cuantitativamente respaldado de encarecimiento que justifica evaluar una compra anticipada.
-    - "MANTENER": las señales no justifican claramente adelantar o aplazar las compras.
-    - "POSTERGAR COMPRAS": se estima una reducción del precio y existe margen para aplazar la compra sin comprometer el abastecimiento.
-
-    Esta categoría no limita el consejo que explicarás al usuario. Personaliza la estrategia para cada activo y considera alternativas como comprar ahora lo indispensable, adelantar compras ante posibles subidas, dividir adquisiciones, comprar gradualmente o aplazar compras no urgentes ante posibles bajadas.
-
-    Adapta el consejo a la tendencia, las fechas estimadas, la magnitud de las variaciones y el riesgo. Considera la urgencia, el almacenamiento y el presupuesto como condiciones que pueden cambiar la decisión, sin asumir que conoces esas características del usuario.
-
-    No recomiendes cantidades, porcentajes de compra ni calendarios operativos arbitrarios. Si faltan datos para decidir con confianza, indícalo y favorece una estrategia prudente.
-
-    5. RIESGO Y TENDENCIA
-    Asigna 'nivel_riesgo' como "Bajo", "Medio" o "Alto", considerando la magnitud de las variaciones, la volatilidad disponible y la incertidumbre de las estimaciones. No confundas un precio alto con un riesgo alto.
-
-    Asigna 'tendencia' como "ALCISTA", "BAJISTA" o "ESTABLE", según las señales cuantitativas disponibles. Si son contradictorias, explica la incertidumbre y evita una conclusión categórica injustificada.
-
-    6. REDACCIÓN ORIENTADA AL COMPRADOR
-    En 'resumen_ejecutivo', comienza con el precio actual y su unidad exacta. Explica qué se espera que ocurra, cuándo podrían presentarse precios relativamente bajos o posibles encarecimientos y cómo esto afecta la decisión de compra.
-
-    En 'justificacion', explica por qué la estrategia es razonable, compara las alternativas de comprar ahora, esperar o dividir la compra e indica sus ventajas y riesgos. Cuando sea posible, cuantifica el efecto de la variación por unidad comercial. Si se conoce el volumen de compra, calcula también su impacto total.
-
-    Evita términos técnicos como "valle de compra", "valle óptimo" o equivalentes. Expresa las conclusiones de manera cotidiana, por ejemplo: "se espera un precio más bajo hacia el 18 de noviembre" o "comprar antes podría reducir la exposición a la subida estimada".
-
-    No repitas recomendaciones genéricas entre activos. Explica qué debería vigilar el comprador y en qué fechas, cuando los datos permitan identificarlo. No garantices ahorros ni presentes estimaciones como certezas.
-
-    FORMATO DE SALIDA
-
-    Devuelve únicamente un objeto JSON válido, sin Markdown ni texto adicional, con la clave "dictamenes" y exactamente un dictamen por cada activo de entrada.
-
-    Cada dictamen debe contener exclusivamente estas propiedades:
+    FORMATO DE SALIDA:
+    Devuelve únicamente JSON válido, sin Markdown ni texto adicional, con la clave "dictamenes" y exactamente un objeto por activo:
 
     {{
-    "asset_id": "identificador exacto del activo",
-    "recomendacion": "COMPRAR_ANTICIPADO",
+    "asset_id": "identificador exacto",
+    "recomendacion": "MANTENER",
     "nivel_riesgo": "Medio",
-    "tendencia": "BAJISTA",
-    "resumen_ejecutivo": "Análisis claro del precio actual, su unidad, evolución esperada, fechas relevantes e impacto práctico para el comprador.",
-    "justificacion": "Explicación personalizada de la estrategia, las alternativas, los riesgos y las variaciones estimadas."
+    "tendencia": "ESTABLE",
+    "resumen_ejecutivo": "Explicación sencilla del precio actual, su unidad, los cambios esperados y el momento de compra más conveniente.",
+    "justificacion": "Motivo de la recomendación, comparación de alternativas y ahorro o riesgo económico estimado."
     }}
 
-    REGLAS FINALES
-    - Copia exactamente cada 'asset_id' de entrada y no omitas activos.
-    - Utiliza exclusivamente las categorías permitidas para recomendación, riesgo y tendencia.
-    - No agregues propiedades adicionales ni inventes información.
-    - Escapa correctamente los caracteres para garantizar un JSON válido.
-    - Mantén explicaciones sustanciales, específicas y comprensibles, evitando repeticiones y texto innecesario.
+    REGLAS FINALES:
+    - Conserva exactamente cada 'asset_id' y no omitas activos.
+    - Respeta las categorías permitidas y las propiedades indicadas.
+    - No inventes datos, fechas ni ahorros garantizados.
+    - Garantiza un JSON válido, sin propiedades adicionales.
+    - Sé claro, natural, específico y conciso.
     """
     for modelo in MODELOS_A_PROBAR:
         start_time = time.time()
