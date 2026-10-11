@@ -10,7 +10,6 @@ def enviar_alertas_pendientes():
     ultimo_log = db.notification_logs.find_one(sort=[("fecha_ejecucion", -1)])
     
     if not ultimo_log or "resultados" not in ultimo_log:
-        print("No se encontraron registros de ejecución recientes en 'notification_logs'.")
         return
 
     resultados = ultimo_log["resultados"]
@@ -24,13 +23,11 @@ def enviar_alertas_pendientes():
     if not smtp_user or not smtp_password:
         print("Error: Las credenciales SMTP (SMTP_USER y SMTP_PASSWORD) no están configuradas.")
         return
-
-    print("Conectando al servidor SMTP...")
     try:
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
         server.login(smtp_user, smtp_password)
-        print("¡Conexión SMTP establecida con éxito!")
+        print("¡Conexión SMTP establecida con éxito")
 
         enviados_count = 0
 

@@ -13,8 +13,7 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-
-# PARÁMETROS CONFIGURABLES DEL AGENTE
+# PARÁMETROS DEL AGENTE
 MODELOS_A_PROBAR = ["gemini-3.5-flash-lite", "gemini-3.5-flash"]
 TEMPERATURE = 0.2
 MAX_OUTPUT_TOKENS = 4000
@@ -28,14 +27,13 @@ def registrar_log_agente(
     tokens_meta: dict = None,
     detalle_error: str = None,
 ):
-    """Guarda un registro de auditoría técnica en español dentro de 'agent_logs'."""
     try:
         db = get_db()
         log_entry = {
             "fecha_hora": datetime.now(timezone.utc),
             "nombre_agente": "agri_batch_agent",
             "modelo_utilizado": modelo_usado,
-            "estado": estado,  # "EXITOSO" o "ERROR"
+            "estado": estado,
             "tiempo_ejecucion_segundos": round(tiempo_ejecucion_seg, 3),
             "cantidad_insumos_procesados": cantidad_insumos,
             "configuracion_parametros": {
@@ -52,43 +50,89 @@ def registrar_log_agente(
         }
 
         db.agent_logs.insert_one(log_entry)
-        print("📜 [Auditoría] Registro técnico guardado exitosamente en 'agent_logs'.")
+        print("Registro técnico guardado exitosamente en 'agent_logs'.")
     except Exception as e:
-        print(f"⚠️ Error al guardar el log de auditoría en MongoDB: {e}")
+        print(f"Error al guardar el log de auditoría en MongoDB: {e}")
 
 
 def analizar_mercado_agricola_en_lote(lista_activos: list):
-    """Envía la lista completa de commodities/insumos agrícolas registrando métricas técnicas."""
     prompt = f"""
-    Eres un analista experto en commodities agrícolas y agroindustria que explica las tendencias de insumos y alimentos de forma clara y directa para productores, compradores y empresarios agrícolas.
-    
-    A continuación se proporciona la información compacta de mercado, picos/valles clave a 180 días y el análisis de sentimiento de noticias para {len(lista_activos)} materias primas:
+    Eres un analista especializado en mercados de materias primas agrícolas y asesor de compras para empresas, productores y comerciantes que adquieren insumos en grandes cantidades, incluso por toneladas.
+
+    Tu objetivo es explicar cómo podrían evolucionar los precios y recomendar estrategias prácticas para reducir costos y riesgos de compra. Utiliza lenguaje claro, directo y accesible para personas sin conocimientos financieros especializados.
+
+    DATOS DE MERCADO
+
+    Analiza los siguientes {len(lista_activos)} activos. Los precios están expresados en dólares estadounidenses (USD) y su unidad comercial oficial se encuentra en 'display_label'.
 
     {json.dumps(lista_activos, ensure_ascii=False, indent=2)}
 
-    Instrucciones obligatorias de redacción:
-    1. REGLA ESTRICTA DE FECHAS: Está PROHIBIDO mencionar números de días técnicos como "día 30", "día 45" o "en 60 días". Refiérete a los momentos del mercado SIEMPRE usando la fecha exacta (ej. "el 12 de noviembre de 2026") o periodos naturales de tiempo (ej. "a mediados de noviembre", "durante la tercera semana de diciembre").
-    2. RESUMEN EJECUTIVO: Indica el precio actual, el pico más alto/bajo proyectado con su fecha exacta y el porcentaje de cambio esperado.
-    3. RECOMENDACIÓN TÁCTICA: Explica claramente qué acción tomar según la fecha proyectada.
-    
-    Devuelve OBLIGATORIAMENTE un arreglo JSON bajo la clave "dictamenes", con la siguiente estructura exacta:
-    [
-      {{
-        "asset_id": "identificador-del-activo",
-        "recomendacion": "COMPRAR_ANTICIPADO" | "MANTENER" | "ESPERAR_VALLE",
-        "nivel_riesgo": "Bajo" | "Medio" | "Alto",
-        "tendencia": "ALCISTA" | "BAJISTA" | "ESTABLE",
-        "resumen_ejecutivo": "Explicación clara del precio actual, picos proyectados a 180 días y cambio % acumulado.",
-        "justificacion": "Análisis táctico claro para la toma de decisiones comerciales y agrícolas."
-      }}
-    ]
-    """
+    INSTRUCCIONES DE ANÁLISIS
 
+    1. BASE DEL ANÁLISIS
+    Fundamenta las conclusiones exclusivamente en los datos cuantitativos proporcionados: precios actuales e históricos, variaciones, indicadores numéricos y estimaciones del modelo. No incorpores noticias, titulares, artículos, opiniones de terceros, análisis textual externo ni indicadores de sentimiento como variables predictoras o evidencia para justificar las conclusiones. No atribuyas movimientos a causas externas que los datos no permitan demostrar.
+
+    2. PRECIOS Y VARIACIONES
+    Para cada activo, identifica el precio actual, la tendencia general y los máximos y mínimos estimados, con sus fechas exactas, cuando estén disponibles. Calcula la variación respecto al precio actual en USD y porcentaje cuando existan datos suficientes.
+
+    Utiliza siempre 'display_label' para expresar la unidad comercial exacta. No inventes ni conviertas unidades, precios, fechas o valores faltantes.
+
+    3. EVOLUCIÓN ESPERADA
+    Explica cronológicamente cómo podría evolucionar el precio, utilizando fechas calendario con día, mes y año. Evita referencias como "día 30" o "en 60 días".
+
+    Distingue entre tendencias generales y fluctuaciones puntuales. Presenta los máximos y mínimos como estimaciones sujetas a incertidumbre, nunca como resultados garantizados. No fuerces conclusiones cuando los datos sean insuficientes o contradictorios.
+
+    4. RECOMENDACIONES PRÁCTICAS
+    Selecciona una categoría interna según los datos:
+    - "COMPRAR ANTICIPADO": existe un riesgo cuantitativamente respaldado de encarecimiento que justifica evaluar una compra anticipada.
+    - "MANTENER": las señales no justifican claramente adelantar o aplazar las compras.
+    - "POSTERGAR COMPRAS": se estima una reducción del precio y existe margen para aplazar la compra sin comprometer el abastecimiento.
+
+    Esta categoría no limita el consejo que explicarás al usuario. Personaliza la estrategia para cada activo y considera alternativas como comprar ahora lo indispensable, adelantar compras ante posibles subidas, dividir adquisiciones, comprar gradualmente o aplazar compras no urgentes ante posibles bajadas.
+
+    Adapta el consejo a la tendencia, las fechas estimadas, la magnitud de las variaciones y el riesgo. Considera la urgencia, el almacenamiento y el presupuesto como condiciones que pueden cambiar la decisión, sin asumir que conoces esas características del usuario.
+
+    No recomiendes cantidades, porcentajes de compra ni calendarios operativos arbitrarios. Si faltan datos para decidir con confianza, indícalo y favorece una estrategia prudente.
+
+    5. RIESGO Y TENDENCIA
+    Asigna 'nivel_riesgo' como "Bajo", "Medio" o "Alto", considerando la magnitud de las variaciones, la volatilidad disponible y la incertidumbre de las estimaciones. No confundas un precio alto con un riesgo alto.
+
+    Asigna 'tendencia' como "ALCISTA", "BAJISTA" o "ESTABLE", según las señales cuantitativas disponibles. Si son contradictorias, explica la incertidumbre y evita una conclusión categórica injustificada.
+
+    6. REDACCIÓN ORIENTADA AL COMPRADOR
+    En 'resumen_ejecutivo', comienza con el precio actual y su unidad exacta. Explica qué se espera que ocurra, cuándo podrían presentarse precios relativamente bajos o posibles encarecimientos y cómo esto afecta la decisión de compra.
+
+    En 'justificacion', explica por qué la estrategia es razonable, compara las alternativas de comprar ahora, esperar o dividir la compra e indica sus ventajas y riesgos. Cuando sea posible, cuantifica el efecto de la variación por unidad comercial. Si se conoce el volumen de compra, calcula también su impacto total.
+
+    Evita términos técnicos como "valle de compra", "valle óptimo" o equivalentes. Expresa las conclusiones de manera cotidiana, por ejemplo: "se espera un precio más bajo hacia el 18 de noviembre" o "comprar antes podría reducir la exposición a la subida estimada".
+
+    No repitas recomendaciones genéricas entre activos. Explica qué debería vigilar el comprador y en qué fechas, cuando los datos permitan identificarlo. No garantices ahorros ni presentes estimaciones como certezas.
+
+    FORMATO DE SALIDA
+
+    Devuelve únicamente un objeto JSON válido, sin Markdown ni texto adicional, con la clave "dictamenes" y exactamente un dictamen por cada activo de entrada.
+
+    Cada dictamen debe contener exclusivamente estas propiedades:
+
+    {{
+    "asset_id": "identificador exacto del activo",
+    "recomendacion": "COMPRAR_ANTICIPADO",
+    "nivel_riesgo": "Medio",
+    "tendencia": "BAJISTA",
+    "resumen_ejecutivo": "Análisis claro del precio actual, su unidad, evolución esperada, fechas relevantes e impacto práctico para el comprador.",
+    "justificacion": "Explicación personalizada de la estrategia, las alternativas, los riesgos y las variaciones estimadas."
+    }}
+
+    REGLAS FINALES
+    - Copia exactamente cada 'asset_id' de entrada y no omitas activos.
+    - Utiliza exclusivamente las categorías permitidas para recomendación, riesgo y tendencia.
+    - No agregues propiedades adicionales ni inventes información.
+    - Escapa correctamente los caracteres para garantizar un JSON válido.
+    - Mantén explicaciones sustanciales, específicas y comprensibles, evitando repeticiones y texto innecesario.
+    """
     for modelo in MODELOS_A_PROBAR:
         start_time = time.time()
         try:
-            print(f"📡 Enviando lote agrícola a Gemini usando modelo: '{modelo}'...")
-
             config = types.GenerateContentConfig(
                 temperature=TEMPERATURE,
                 max_output_tokens=MAX_OUTPUT_TOKENS,
@@ -100,7 +144,6 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
 
             elapsed_time = time.time() - start_time
 
-            # Extraer consumo de tokens
             usage = getattr(response, "usage_metadata", None)
             tokens_meta = {
                 "tokens_entrada_prompt": getattr(usage, "prompt_token_count", 0)
@@ -114,7 +157,6 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
                 else 0,
             }
 
-            # Guardar Log de éxito
             registrar_log_agente(
                 cantidad_insumos=len(lista_activos),
                 modelo_usado=modelo,
@@ -127,9 +169,7 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
 
         except Exception as e:
             elapsed_time = time.time() - start_time
-            print(f"❌ Error con el modelo '{modelo}': {e}")
-
-            # Guardar Log de Error
+            print(f"Error con el modelo '{modelo}': {e}")
             registrar_log_agente(
                 cantidad_insumos=len(lista_activos),
                 modelo_usado=modelo,

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     try:
         ensure_indexes()
         print("1/4 Cargando OHLCV Histórico de Commodities (Yahoo Finance)...")
-        details["ohlcv"] = load_ohlcv(period="1y")
+        details["ohlcv"] = load_ohlcv(period="3y")
         print(details["ohlcv"])
 
         print("2/4 Noticias Agrícolas...")

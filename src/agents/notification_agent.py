@@ -26,14 +26,13 @@ def registrar_log_agente(
     tokens_meta: dict = None,
     detalle_error: str = None,
 ):
-    """Guarda un registro de auditoría técnica en español dentro de 'agent_logs'."""
     try:
         db = get_db()
         log_entry = {
             "fecha_hora": datetime.now(timezone.utc),
             "nombre_agente": "agri_notification_agent",
             "modelo_utilizado": modelo_usado,
-            "estado": estado,  # "EXITOSO" o "ERROR"
+            "estado": estado,
             "tiempo_ejecucion_segundos": round(tiempo_ejecucion_seg, 3),
             "cantidad_insumos_procesados": cantidad_insumos,
             "configuracion_parametros": {
@@ -50,13 +49,12 @@ def registrar_log_agente(
         }
 
         db.agent_logs.insert_one(log_entry)
-        print("📜 [Auditoría] Registro técnico guardado exitosamente en 'agent_logs'.")
+        print("Registro técnico guardado exitosamente en 'agent_logs'.")
     except Exception as e:
-        print(f"⚠️ Error al guardar el log de auditoría en MongoDB: {e}")
+        print(f"Error al guardar el log de auditoría en MongoDB: {e}")
 
 
 def ejecutar_agente_notificaciones():
-    print("-> El script del agente de notificaciones agrícolas se ha iniciado...")
     db = get_db()
 
     clientes = list(db.clients.find({"active": True}))
@@ -75,13 +73,13 @@ def ejecutar_agente_notificaciones():
         if summary:
             resumen_mercado[asset_id] = {
                 "precio_actual": summary.get("current_price"),
-                "tendencia_180d": summary.get("trend"),
-                "variacion_pct_180d": summary.get("predicted_change_pct"),
-                "puntos_clave": summary.get("puntos_clave_180d", summary.get("puntos_clave_fechas", [])),
-                "sentimiento_noticias": summary.get("sentiment_label")
+                "tendencia": summary.get("trend"),
+                "variacion_pct": summary.get("predicted_change_pct"),
+                "display_label": summary.get("display_label", "USD / Unidad"),
+                "puntos_clave": summary.get("puntos_clave_fechas", [])
             }
         else:
-            resumen_mercado[asset_id] = "Sin datos de predicción disponibles actualmente."
+            resumen_mercado[asset_id] = "Sin datos disponibles."
 
     payload_clientes = []
     for cliente in clientes:
@@ -90,29 +88,30 @@ def ejecutar_agente_notificaciones():
             "nombre": cliente.get("name", "Cliente Agro"),
             "email": cliente.get("email"),
             "watchlist": cliente.get("watchlist", []),
-            "preferencia": cliente.get("preferencia", "MANTENER")
+            "perfil_o_consulta": cliente.get("preferencia", "Empresario buscando optimizar compras y ventas de insumos agrícolas.")
         })
 
     prompt_sistema = f"""
-    Eres un consultor experto en cadenas de suministro agrícolas y agroindustria. Tu objetivo es redactar un análisis estratégico y directo para productores, compradores e inversionistas agrícolas.
+    Eres un asesor experto en mercados agrícolas y agroindustria. Analiza los datos disponibles y genera recomendaciones comerciales personalizadas según el perfil, los productos y los objetivos de cada cliente.
 
-    Analiza el siguiente resumen de mercado a 180 días para los insumos de los clientes y evalúa estrictamente sus preferencias individuales.
-    
-    Resumen de Mercado por Insumo Agrícola:
+    Datos de mercado:
     {json.dumps(resumen_mercado, ensure_ascii=False)}
 
-    Lista de Clientes y Preferencias:
+    Clientes, watchlists y consultas personalizadas:
     {json.dumps(payload_clientes, ensure_ascii=False)}
 
-    INSTRUCCIONES ESTRICTAS DE RESPUESTA:
-    Para cada cliente, determina si se debe enviar una alerta comparando los movimientos de sus insumos con su campo "preferencia".
-    REGLA DE FECHAS: Esta prohibido decir "día 30" o "en 60 días". Utiliza siempre las fechas exactas o periodos naturales de tiempo presentes en los puntos clave.
+    Instrucciones:
+    -Personalización: Adapta cada análisis al negocio y objetivo del cliente (café, trigo u otro producto), considerando si busca comprar, producir, vender o exportar para maximizar sus ganancias. No generes recomendaciones genéricas.
+    -Proyección cercana: Prioriza los próximos meses con datos disponibles y relevancia comercial. Identifica los periodos más convenientes y aquellos que requieren precaución. No extiendas innecesariamente el horizonte de predicción.
+    -Resumen comercial: Indica el precio actual en dólares y su unidad exacta según display_label, explica su equivalencia en kilogramos cuando corresponda y describe la evolución prevista con fechas concretas. Traduce las proyecciones en recomendaciones prácticas. Si los cambios esperados son mínimos, indícalo claramente y evita generar alarmas.
+    -Envío estricto (enviar_correo): Usa true únicamente cuando exista una oportunidad o un riesgo futuro suficientemente relevante, respaldado por los datos y directamente relacionado con los objetivos del cliente, que justifique contactarlo ahora. Usa false si los cambios son mínimos, no hay una decisión comercial que requiera atención, la información es insuficiente o la recomendación no aporta valor concreto. Ante la duda, usa true.
+    -Comunicación: Emplea lenguaje claro, dinámico y orientado al negocio. No menciones explícitamente el sentimiento del mercado, noticias ni tecnicismos innecesarios. No inventes precios, conversiones, fechas ni proyecciones; si falta información, omite el dato no verificable y aclara la limitación cuando sea relevante.
     
-    Devuelve OBLIGATORIAMENTE un objeto JSON con la clave "resultados" que contenga exactamente estos campos por cliente:
-    - cliente_id (string)
-    - enviar_correo (booleano: true o false)
-    - resumen_personalizado (Un texto claro explicando los picos más altos/bajos proyectados con fechas exactas del calendario y la tendencia esperada para sus insumos de interés).
-    - orden_inversion (Una instrucción concisa que incluya obligatoriamente el insumo, ej. "Comprar Maíz antes de Noviembre", "Esperar Valle en Trigo" o "Mantener inventario de Café").
+    Formato de salida obligatorio: Devuelve únicamente un JSON válido con la clave resultados, que contenga un objeto por cliente y exactamente estos campos:
+    cliente_id: string.
+    enviar_correo: booleano real (true o false).
+    resumen_personalizado: recomendación comercial clara, específica y sustentada en los datos disponibles.
+    orden_inversion (Instrucción concisa y práctica orientada a su objetivo).
     """
 
     for modelo in MODELOS_A_PROBAR:
@@ -178,7 +177,7 @@ def ejecutar_agente_notificaciones():
 
         except Exception as e:
             elapsed_time = time.time() - start_time
-            print(f"❌ Error con el modelo '{modelo}': {e}")
+            print(f"Error con el modelo '{modelo}': {e}")
 
             registrar_log_agente(
                 cantidad_insumos=len(insumos_requeridos),

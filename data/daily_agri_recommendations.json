@@ -1,0 +1,102 @@
+{
+  "fecha_actualizacion": "2026-10-11T00:39:48.454891+00:00",
+  "total_activos": 12,
+  "analisis_diario": [
+    {
+      "asset_id": "corn",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El maíz registra un precio de 4.8 dólares por 1 Bushel (25.4 kg). Se observa una tendencia bajista hacia el próximo año, aunque el mercado experimentará un pico máximo de 5.14 dólares el 9 de noviembre de 2026, para luego descender progresivamente hasta tocar un valle mínimo de 3.98 dólares el 8 de abril de 2027.",
+      "justificacion": "A pesar de que las noticias muestran un sentimiento positivo, el análisis de la evolución de precios indica una corrección importante a la baja en los próximos meses. Conviene mantener la calma en las adquisiciones y esperar a que el mercado alcance los precios más bajos proyectados para el inicio del segundo trimestre del próximo año, evitando así sobrecostos innecesarios en la materia prima."
+    },
+    {
+      "asset_id": "wheat",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El trigo se cotiza actualmente a 6.71 dólares por 1 Bushel (27.2 kg). Los precios tendrán un repunte temporal alcanzando los 7.0 dólares el 9 de noviembre de 2026, pero posteriormente iniciarán un descenso sostenido hasta llegar a los 5.67 dólares el 8 de abril de 2027.",
+      "justificacion": "El comportamiento del mercado muestra una clara tendencia hacia la baja tras el pico de finales de año. Dado que las cotizaciones se reducirán considerablemente conforme avance el primer trimestre de 2027, la estrategia más inteligente para los productores es diferir las grandes compras de este insumo y aprovechar los valores más económicos al final del periodo analizado."
+    },
+    {
+      "asset_id": "soybeans",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "La soja presenta un precio actual de 12.92 dólares por 1 Bushel (25.4 kg). El mercado se mantendrá estable con un ligero pico de 12.93 dólares el 11 de octubre de 2026, para después registrar una tendencia a la baja que llevará el precio hasta un valle de 10.91 dólares el 8 de enero de 2027, cerrando en 11.47 dólares el 8 de abril de 2027.",
+      "justificacion": "Aunque el sentimiento en noticias es favorable, los números indican una clara disminución en el valor del grano hacia el invierno. Comprar de inmediato podría significar adquirir en la parte alta de la curva; por lo tanto, se recomienda esperar a los ajustes estacionales del mercado para optimizar los costos de producción."
+    },
+    {
+      "asset_id": "rice",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El arroz se encuentra a un precio de 0.17 dólares por 1 Quintal (45.36 kg). El grano mostrará un incremento leve hacia el 9 de diciembre de 2026 con un valor de 0.18 dólares, antes de iniciar una caída pronunciada que lo llevará al valle de 0.14 dólares el 8 de abril de 2027.",
+      "justificacion": "El mercado de arroz muestra debilidad y un sentimiento negativo en las noticias recientes. Las caídas previstas hacia el final del ciclo indican que no es un buen momento para asegurar volúmenes grandes, siendo más prudente esperar la llegada de precios más competitivos en los primeros meses del año entrante."
+    },
+    {
+      "asset_id": "oats",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Alto",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "La avena registra un precio actual de 4.21 dólares por 1 Bushel (14.5 kg). Los precios experimentarán una reducción constante desde los 4.15 dólares del 11 de octubre de 2026 hasta tocar el valle mínimo de 3.37 dólares el 8 de abril de 2027.",
+      "justificacion": "La tendencia bajista es marcada y sostenida para este cultivo. Ante un mercado a la baja y un volumen limitado de noticias, lo más sensato es cautelar la caja y aplazar las compras de este insumo hasta que se alcancen los niveles de soporte mínimo al finalizar el periodo evaluado."
+    },
+    {
+      "asset_id": "coffee",
+      "recomendacion": "COMPRAR_ANTICIPADO",
+      "nivel_riesgo": "Medio",
+      "tendencia": "ALCISTA",
+      "resumen_ejecutivo": "El café tiene un precio actual de 2.87 dólares por 1 Quintal (45.36 kg), el cual coincide con el valle mínimo. A partir de esta fecha, el grano iniciará un ascenso sostenido hasta alcanzar un pico máximo de 3.49 dólares el 9 de marzo de 2027.",
+      "justificacion": "La tendencia alcista es clara y respaldada por un mercado que encarecerá el producto conforme avancen los meses. Comprar de manera anticipada en este momento permite asegurar el inventario a un precio accesible, protegiendo el margen de ganancia frente a las subidas inminentes previstas para el inicio del próximo año."
+    },
+    {
+      "asset_id": "cocoa",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Alto",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El cacao se cotiza en 56.65 dólares por 1 Tonelada (1000 kg). Aunque el 11 de octubre de 2026 marcará un precio alto de 56.74 dólares, el mercado sufrirá un desplome fuerte que llevará el precio a un valle de 33.19 dólares el 9 de diciembre de 2026, recuperándose levemente hacia los 54.20 dólares el 8 de abril de 2027.",
+      "justificacion": "La alta volatilidad y la fuerte caída proyectada para finales de año sugieren que las compras inmediatas representan un riesgo financiero considerable. Es aconsejable monitorear de cerca el mercado y aprovechar los momentos de mayor depresión de precios en el tramo final del año para realizar adquisiciones estratégicas."
+    },
+    {
+      "asset_id": "cotton",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El algodón registra un precio de 0.81 dólares por una Libra (0.45 kg). Tras un breve pico el 9 de noviembre de 2026, el precio descenderá de forma gradual hasta tocar un valle mínimo de 0.70 dólares el 8 de enero de 2027 y repetirlo el 8 de abril de 2027.",
+      "justificacion": "El sentimiento negativo en el sector y la tendencia general a la baja indican que los precios actuales se contraerán. Por esta razón, se aconseja posponer las adquisiciones de fibra hasta que el mercado refleje los valores mínimos proyectados para el inicio de año."
+    },
+    {
+      "asset_id": "orange_juice",
+      "recomendacion": "COMPRAR_ANTICIPADO",
+      "nivel_riesgo": "Bajo",
+      "tendencia": "ALCISTA",
+      "resumen_ejecutivo": "El jugo de naranja se cotiza actualmente a 1.44 dólares por unidad. El mercado experimentará un incremento significativo, pasando por un valle de 1.54 dólares el 7 de octubre de 2026 y escalando hasta un pico máximo de 1.85 dólares el 20 de noviembre de 2026, para mantenerse en valores altos cercanos a 1.62 dólares hacia abril de 2027.",
+      "justificacion": "La fuerte presión alcista en el corto plazo indica que los precios van a encarecerse notablemente en las próximas semanas. Asegurar la compra de este insumo de forma inmediata evitará pagar los precios elevados proyectados para los meses venideros."
+    },
+    {
+      "asset_id": "crude_oil_transport",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El transporte de crudo se ubica en 0.92 dólares por Barril (159 Litros). Los precios mostrarán una tendencia decreciente constante a lo largo de los meses, pasando por diversos ajustes hasta alcanzar un valle mínimo de 0.79 dólares el 8 de abril de 2027.",
+      "justificacion": "Dado que los costos de transporte e insumos energéticos asociados tienden a abaratarse en los próximos meses, es una decisión financiera prudente retrasar la contratación o compromisos de largo plazo en este rubro para beneficiarse de tarifas más bajas al concluir el ciclo."
+    },
+    {
+      "asset_id": "natural_gas_fertilizer",
+      "recomendacion": "MANTENER",
+      "nivel_riesgo": "Bajo",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El gas natural para fertilizantes registra un precio de 0.03 dólares por 1 MMBtu. Aunque el mercado tendrá un repunte temporal que alcanzará un pico de 0.04 dólares el 7 de febrero de 2027, el precio general cerrará con una ligera tendencia a la baja hacia el mes de abril de 2027.",
+      "justificacion": "El comportamiento de este insumo se mantiene relativamente estable con variaciones menores. Se recomienda mantener los niveles actuales de suministro y abastecimiento sin incurrir en compras extraordinarias, vigilando de cerca el comportamiento del mercado durante el pico de febrero."
+    },
+    {
+      "asset_id": "sugar",
+      "recomendacion": "POSTERGAR_COMPRAS",
+      "nivel_riesgo": "Medio",
+      "tendencia": "BAJISTA",
+      "resumen_ejecutivo": "El azúcar se cotiza a 0.20 dólares por 1 Libra (0.45 kg). El mercado tendrá un repunte inicial con un pico de 0.23 dólares el 9 de noviembre de 2026, pero descenderá posteriormente hasta tocar un valle mínimo de 0.18 dólares el 7 de febrero de 2027.",
+      "justificacion": "El sentimiento del mercado es negativo y las proyecciones indican una reducción en el precio del edulcorante a comienzos del próximo año. Conviene esperar a que el precio toque fondo en febrero para realizar compras de volumen y optimizar así los costos operativos."
+    }
+  ]
+}

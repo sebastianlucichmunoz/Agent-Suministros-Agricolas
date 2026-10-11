@@ -8,16 +8,14 @@ from src.db import get_db
 from src.api_clients.yfinance_client import YFinanceAgriClient
 
 def run_ingestion():
-    print("Iniciando proceso de ingesta para el Mercado Agrícola...")
     db = get_db()
     client = YFinanceAgriClient()
-    registros = client.fetch_ohlcv_history(period="1y", interval="1d")
+    registros = client.fetch_ohlcv_history(period="3y", interval="1d")
     
     if not registros:
-        print("No se obtuvieron datos para ingresar.")
         return
         
-    print(f"Obtenidos {len(registros)} registros. Insertando en lote hacia MongoDB Atlas...")
+    print(f"Obtenidos {len(registros)} registros.")
     collection = db.ohlcv
 
     collection.create_index([("asset_id", 1), ("timestamp", 1), ("period", 1)], unique=True)
@@ -38,7 +36,7 @@ def run_ingestion():
     if operations:
         res = collection.bulk_write(operations, ordered=False)
         processed = res.upserted_count + res.modified_count
-        print(f"Sincronización ultra rápida completada: {processed} registros procesados en MongoDB Atlas (`agri_analytics_db`).")
+        print(f"Sincronización completada: {processed} registros procesados en MongoDB Atlas (`agri_analytics_db`).")
 
 if __name__ == "__main__":
     run_ingestion()

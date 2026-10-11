@@ -2,13 +2,13 @@ from pymongo import UpdateOne
 from src.api_clients.yfinance_client import YFinanceAgriClient
 from src.db import get_db
 
-def load_ohlcv(period="1y", interval="1d"):
+def load_ohlcv(period="3y", interval="1d"):
     """"""
     db = get_db()
     client = YFinanceAgriClient()
     
     if isinstance(period, int):
-        period = f"{period}d" if period <= 365 else "1y"
+        period = f"{period}d" if period <= 365 else "3y"
 
     registros = client.fetch_ohlcv_history(period=period, interval=interval)
     if not registros:

@@ -53,16 +53,13 @@ def tag_assets_in_title(title: str) -> list[str]:
 
 
 def refresh_news(limit_per_asset=5):
-    """
-    Extrae noticias desde feeds RSS, calcula sentimiento con VADER e inserta en MongoDB Atlas.
-    Limita la cantidad de noticias a procesar por cada commodity (por defecto max 5).
-    """
+    
     db = get_db()
     sia = SentimentIntensityAnalyzer()
     news_collection = db.news
     
     total_ingested = 0
-    print(f"🚀 Iniciando extracción de noticias agrícolas (Límite: {limit_per_asset} por activo)...")
+    print(f"Iniciando extracción de noticias agrícolas (Límite: {limit_per_asset} por activo)...")
     
     for asset_key, feed_url in RSS_FEEDS.items():
         parsed = feedparser.parse(feed_url)
@@ -101,8 +98,7 @@ def refresh_news(limit_per_asset=5):
                 "sentiment_neutral": scores["neu"],
                 "sentiment_label": label
             }
-            
-            # Upsert en MongoDB para no duplicar noticias
+
             result = news_collection.update_one(
                 {"url": url},
                 {"$set": doc},
@@ -111,8 +107,7 @@ def refresh_news(limit_per_asset=5):
             if result.upserted_id or result.modified_count:
                 total_ingested += 1
                 
-    print(f"✅ Proceso finalizado. Se procesaron/actualizaron {total_ingested} noticias de commodities.")
-
+    print(f"Proceso finalizado. Se procesaron/actualizaron {total_ingested} noticias.")
 
 if __name__ == "__main__":
     refresh_news()

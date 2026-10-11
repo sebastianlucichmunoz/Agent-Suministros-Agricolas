@@ -25,9 +25,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ==========================================
-# ESTILOS CSS PERSONALIZADOS 
-# ==========================================
+st.markdown("""
+    <style>
+        /* Ajusta el espacio superior del contenedor principal de Streamlit */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        /* Asegura que la cabecera o banner respire correctamente */
+        header[data-testid="stHeader"] {
+            background: transparent !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 .stApp {
@@ -97,26 +108,21 @@ except Exception:
     st.error("No se pudo conectar a MongoDB Atlas.")
     st.stop()
 
-# =======================
 # CABECERA
-# =======================
-
-AGRO_BANNER_URL = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=300&q=80"
+AGRO_BANNER_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7xMp_XASpg1M5WOOXfMh-Jc2JUaFFYtU4cojK8O2jJw&s=10"
 
 st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
-    <img src="{AGRO_BANNER_URL}" style="width: 110px; height: 110px; object-fit: cover; border-radius: 12px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
+    <img src="{AGRO_BANNER_URL}" style="width: 250px; height: 100px; object-fit: cover; border-radius: 12px; box-shadow: 2px 4px 6px rgba(0,0,0,0.1);">
     <div>
-        <h1 style="margin: 0; color: #0F172A; font-size: 2.3rem; font-weight: 800; line-height: 1.1;">Agri-Supply Chain Analytics</h1>
-        <p style="margin: 0; color: #64748B; font-size: 1.05rem; font-weight: 500;">Monitoreo de Insumos · Proyecciones ML a 180 Días · Análisis de Sentimiento NLP</p>
+        <h1 style="margin: 0; color: #0F172A; font-size: 2.3rem; font-weight: 800; line-height: 1.1;">Panel de Suministros Agrícolas</h1>
+        <p style="margin: 0; color: #64748B; font-size: 1.05rem; font-weight: 500;">Monitoreo inteligente de insumos - Apoyo a decisiones logísticas</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# =======================
 # FILTROS Y BARRA LATERAL 
-# =======================
-st.sidebar.markdown("### 🌾 Menú de Suministros")
+st.sidebar.markdown("### 🌾 Menú de Insumo")
 
 db = get_db()
 
@@ -125,17 +131,17 @@ def load_catalog_map():
     docs = list(db.assets_catalog.find({}, {"_id": 0}))
     if not docs:
         return {
-            "corn": {"name_es": "Maíz", "display_label": "USD / Bushel (25.4 kg)", "ticker": "ZC=F"},
-            "wheat": {"name_es": "Trigo", "display_label": "USD / Bushel (27.2 kg)", "ticker": "ZW=F"},
-            "soybeans": {"name_es": "Soya", "display_label": "USD / Bushel (27.2 kg)", "ticker": "ZS=F"},
-            "rice": {"name_es": "Arroz", "display_label": "USD / Quintal (45.36 kg)", "ticker": "ZR=F"},
-            "oats": {"name_es": "Avena", "display_label": "USD / Bushel (14.5 kg)", "ticker": "ZO=F"},
-            "coffee": {"name_es": "Café", "display_label": "USD / Quintal (45.36 kg)", "ticker": "KC=F"},
-            "sugar": {"name_es": "Azúcar", "display_label": "USD / Libra (0.45 kg)", "ticker": "SB=F"},
-            "cocoa": {"name_es": "Cacao", "display_label": "USD / Tonelada (1,000 kg)", "ticker": "CC=F"},
-            "cotton": {"name_es": "Algodón", "display_label": "USD / Libra (0.45 kg)", "ticker": "CT=F"},
-            "crude_oil_transport": {"name_es": "Petróleo WTI (Transporte/Fletes)", "display_label": "USD / Barril (159 Litros)", "ticker": "CL=F"},
-            "natural_gas_fertilizer": {"name_es": "Gas Natural (Fertilizantes)", "display_label": "USD / MMBtu (Energía)", "ticker": "NG=F"}
+            "corn": {"name_es": "Maíz", "display_label": "Precio por 1 Bushel (25.4 kg)", "ticker": "ZC=F"},
+            "wheat": {"name_es": "Trigo", "display_label": "Precio por 1 Bushel (27.2 kg)", "ticker": "ZW=F"},
+            "soybeans": {"name_es": "Soya", "display_label": "Precio por 1 Bushel (27.2 kg)", "ticker": "ZS=F"},
+            "rice": {"name_es": "Arroz", "display_label": "Precio por 1 Quintal (45.36 kg)", "ticker": "ZR=F"},
+            "oats": {"name_es": "Avena", "display_label": "Precio por 1 Bushel (14.5 kg)", "ticker": "ZO=F"},
+            "coffee": {"name_es": "Café", "display_label": "Precio por 1 Quintal (45.36 kg)", "ticker": "KC=F"},
+            "sugar": {"name_es": "Azúcar", "display_label": "Precio por 1 Libra (0.45 kg)", "ticker": "SB=F"},
+            "cocoa": {"name_es": "Cacao", "display_label": "Precio por 1 Tonelada (1,000 kg)", "ticker": "CC=F"},
+            "cotton": {"name_es": "Algodón", "display_label": "Precio por 1 Libra (0.45 kg)", "ticker": "CT=F"},
+            "crude_oil_transport": {"name_es": "Petróleo WTI (Transporte/Fletes)", "display_label": "Precio por 1 Barril (159 Litros)", "ticker": "CL=F"},
+            "natural_gas_fertilizer": {"name_es": "Gas Natural (Fertilizantes)", "display_label": "Precio por 1 MMBtu (Energía)", "ticker": "NG=F"}
         }
     return {d["asset_id"]: d for d in docs}
 
@@ -144,7 +150,7 @@ catalog = load_catalog_map()
 asset_options = {info.get("name_es", asset_key): asset_key for asset_key, info in catalog.items()}
 
 selected_name = st.sidebar.selectbox(
-    "Materia prima / Insumo",
+    "Insumo Agrícola",
     options=list(asset_options.keys())
 )
 
@@ -153,10 +159,13 @@ asset_info = catalog.get(asset_id, {})
 ticker = asset_info.get("ticker", AGRICULTURAL_COMMODITIES.get(asset_id, ""))
 
 range_days = st.sidebar.selectbox(
-    "Histórico (Días)",
-    [30, 90, 180, 365],
-    index=3,
-    format_func=lambda x: f"{x} días" if x < 365 else "1 año"
+    "Histórico",
+    [30, 90, 180, 365, 730, 1095],
+    index=5, 
+    format_func=lambda x: (
+        f"{x} días" if x < 365 
+        else ("1 año" if x == 365 else f"{x // 365} años")
+    )
 )
 
 db = get_db()
@@ -174,38 +183,32 @@ pred_doc = db.predictions.find_one({"asset_id": asset_id})
 news_docs = list(db.news.find({"mentioned_asset_ids": asset_id}).sort("published_at", -1).limit(50))
 news_df = pd.DataFrame(news_docs)
 
-# =========================================================
 # 1. MÉTRICAS PRINCIPALES 
-# =========================================================
 asset_title = asset_info.get("name_es", asset_id.replace('_', ' ').title())
 st.markdown(f"<div align='center'><h2 style='color: #0F172A; font-weight: 800;'>Métricas de Mercado: {asset_title}</h2></div>", unsafe_allow_html=True)
 
 if not hist_df.empty and "close" in hist_df.columns:
-    current_price = float(hist_df["close"].iloc[-1])
+    current_price = float(hist_df["close"].iloc[-1]) / 100.0
 else:
-    current_price = float(pred_doc.get("current_price", 0.0)) if pred_doc else 0.0
+    raw_pred_price = float(pred_doc.get("current_price", 0.0)) if pred_doc else 0.0
+    current_price = raw_pred_price / 100.0
 
 trend = pred_doc.get("trend", "N/A") if pred_doc else "N/A"
 predicted_change = float(pred_doc.get("predicted_change_pct", 0.0)) if pred_doc else 0.0
 
-if not news_df.empty and "sentiment_compound" in news_df.columns:
-    news_df["sentiment_compound"] = pd.to_numeric(news_df["sentiment_compound"], errors="coerce")
-    avg_sent = news_df["sentiment_compound"].mean()
-    sent_label = "Positivo 🟢" if avg_sent > 0.05 else ("Negativo 🔴" if avg_sent < -0.05 else "Neutral ⚪")
-else:
-    sent_label = "Sin datos ⚪"
-
 unit_label = asset_info.get("display_label", "USD")
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3 = st.columns(3)
 
 with m1:
     st.markdown(
         f"""
         <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #15803D; border-radius: 8px; padding: 12px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
             <div style="color: #475569; font-size: 0.9rem; font-weight: 600;">Precio Actual</div>
-            <div style="color: #0F172A; font-size: 1.6rem; font-weight: 800; margin-top: 2px;">${current_price:,.2f}</div>
-            <div style="color: #16A34A; font-size: 0.75rem; font-weight: 700; margin-top: 4px;">📍 {unit_label}</div>
+            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 2px;">
+                <span style="color: #0F172A; font-size: 1.6rem; font-weight: 800;">${current_price:,.2f}</span>
+                <span style="color: #334155; font-size: 1.1rem; font-weight: 600;">{unit_label}</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -216,13 +219,6 @@ with m2:
 
 with m3:
     m3.metric("Proyección Acumulada", f"{predicted_change:+.2f}%")
-
-with m4:
-    m4.metric("Sentimiento Noticias", sent_label)
-
-# =========================================================
-# SECCIÓN: DICTAMEN DE IA (GEMINI)
-# =========================================================
 
 asset_id_actual = locals().get("asset_id", locals().get("selected_asset", "corn"))
 nombre_actual = locals().get("name", locals().get("selected_name", asset_id_actual))
@@ -256,7 +252,7 @@ if rec_data and "analisis_diario" in rec_data:
         <div style="background-color: #FFFFFF; border: 2px solid {color_hex}; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px;">
             <div style="display:flex; justify-content: space-between; margin-bottom: 15px;">
                 <div style="text-align: center; width: 33%;">
-                    <p style="margin:0; color: #64748B; font-size: 0.9rem; font-weight:bold;">Recomendación Táctica</p>
+                    <p style="margin:0; color: #64748B; font-size: 0.9rem; font-weight:bold;">Recomendación</p>
                     <h3 style="margin:0; color: {color_hex}; font-size: 1.6rem;">{rec}</h3>
                 </div>
                 <div style="text-align: center; width: 33%; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0;">
@@ -264,13 +260,13 @@ if rec_data and "analisis_diario" in rec_data:
                     <h3 style="margin:0; color: #0F172A; font-size: 1.5rem;">{riesgo}</h3>
                 </div>
                 <div style="text-align: center; width: 33%;">
-                    <p style="margin:0; color: #64748B; font-size: 0.9rem; font-weight:bold;">Tendencia a 180 días</p>
+                    <p style="margin:0; color: #64748B; font-size: 0.9rem; font-weight:bold;">Tendencia</p>
                     <h3 style="margin:0; color: #0F172A; font-size: 1.5rem;">{tendencia}</h3>
                 </div>
             </div>
             <div style="background-color: #F8FAFC; padding: 15px; border-radius: 8px; border-left: 4px solid {color_hex};">
-                <p style="margin:0 0 10px 0; color: #334155; font-size: 0.95rem;"><strong>Resumen Ejecutivo:</strong> {dictamen_activo.get('resumen_ejecutivo', '')}</p>
-                <p style="margin:0; color: #334155; font-size: 0.95rem;"><strong>Justificación Táctica:</strong> {dictamen_activo.get('justificacion', '')}</p>
+                <p style="margin:0 0 10px 0; color: #334155; font-size: 0.95rem;"><strong>Resumen del Mercado:</strong> {dictamen_activo.get('resumen_ejecutivo', '')}</p>
+                <p style="margin:0; color: #334155; font-size: 0.95rem;"><strong>Justificación de la recomendación:</strong> {dictamen_activo.get('justificacion', '')}</p>
             </div>
             <p style="margin:10px 0 0 0; text-align:right; font-size:0.75rem; color:#94A3B8;">Última corrida del Agente: {fecha_formateada} UTC</p>
         </div>
@@ -280,9 +276,8 @@ if rec_data and "analisis_diario" in rec_data:
 else:
     st.warning("No se encontraron recomendaciones recientes de IA en la base de datos.")
 
-# =========================================================
+
 # 2. GRÁFICO HISTÓRICO
-# =========================================================
 c_chart, c_news = st.columns([1.8, 1], gap="large")
 
 with c_chart:
@@ -299,10 +294,11 @@ with c_chart:
             
             if price_col:
                 fig = go.Figure()
-           
+                real_prices_usd = plot_df[price_col] / 100.0
+
                 fig.add_trace(go.Scatter(
-                    x=plot_df["parsed_date"], y=plot_df[price_col], 
-                    mode="lines", name="Precio Real", 
+                    x=plot_df["parsed_date"], y=real_prices_usd, 
+                    mode="lines", name="Precio Real (USD)", 
                     line=dict(color="#15803D", width=2.5)
                 ))
                 
@@ -310,10 +306,10 @@ with c_chart:
                     preds_array = pred_doc["predictions_180d"]
                     if preds_array:
                         pred_dates = [pd.to_datetime(p["target_time"], utc=True) for p in preds_array]
-                        pred_prices = [float(p["predicted_close"]) for p in preds_array]
+                        pred_prices = [float(p["predicted_close"]) / 100.0 for p in preds_array]
                         
                         last_real_date = plot_df["parsed_date"].max()
-                        last_real_price = float(plot_df[price_col].iloc[-1])
+                        last_real_price = float(real_prices_usd.iloc[-1])
                         
                         pred_dates.insert(0, last_real_date)
                         pred_prices.insert(0, last_real_price)
@@ -324,7 +320,7 @@ with c_chart:
                             mode="lines", name="Pronóstico XGBoost (180d)",
                             line=dict(dash="dash", color="#EAB308", width=3)
                         ))
-            
+                
                 fig.update_layout(
                     template="plotly_white",
                     paper_bgcolor="rgba(0,0,0,0)",
@@ -335,7 +331,7 @@ with c_chart:
                     hovermode="x unified",
                     showlegend=True,
                     legend=dict(
-                        font=dict(color="#0F172A", size=11, weight="bold"),
+                        font=dict(color="#0F172A", size=11),
                         bgcolor="rgba(255,255,255,0.8)"
                     ),
                     xaxis=dict(
@@ -347,7 +343,7 @@ with c_chart:
                     yaxis=dict(
                         showgrid=True, 
                         gridcolor="#E2E8F0", 
-                        title="", 
+                        title="USD / Bushel", 
                         tickfont=dict(color="#334155", size=11),  
                         zerolinecolor="#E2E8F0"
                     )

@@ -25,29 +25,34 @@ def extraer_picos_y_muestras(predictions_180d, step=30):
     return [
         {
             "tipo": item["tipo"],
-            "fecha": str(item["target_time"])[:10],  # Formato YYYY-MM-DD
-            "precio_proyectado": round(float(item["predicted_close"]), 2),
+            "fecha": str(item["target_time"])[:10],  
+            "precio_proyectado": round(float(item["predicted_close"]) / 100.0, 2),
             "variacion_pct": round(float(item["change_pct"]), 2)
         }
         for item in puntos_ordenados
     ]
 
 def extraer_datos_consolidados_agricolas():
-    """
-    Extrae las predicciones autorregresivas desde db.predictions,
-    comprime los puntos clave por fecha y guarda el lote en db.market_summary.
-    """
+
     db = get_db()
+
+    catalog_docs = list(db.assets_catalog.find({}, {"_id": 0}))
+    catalog_map = {d["asset_id"]: d.get("display_label", "USD / Unidad") for d in catalog_docs}
+    
     preds_raw = list(db.predictions.find({}, {"_id": 0}))
     
     mercado_consolidado = {}
     
     for p in preds_raw:
         asset_id = p.get("asset_id")
-        current_price = float(p.get("current_price", 0.0))
-        predicted_close_180d = float(p.get("predicted_close_180d", current_price))
+        
+        current_price = float(p.get("current_price", 0.0)) / 100.0
+        predicted_close_180d = float(p.get("predicted_close_180d", p.get("current_price", 0.0))) / 100.0
         predicted_change_pct = float(p.get("predicted_change_pct", 0.0))
+        
         puntos_clave = extraer_picos_y_muestras(p.get("predictions_180d", []))
+        
+        display_label = catalog_map.get(asset_id, "USD / Unidad")
         
         mercado_consolidado[asset_id] = {
             "asset_id": asset_id,
@@ -55,6 +60,7 @@ def extraer_datos_consolidados_agricolas():
             "predicted_close_180d": round(predicted_close_180d, 2),
             "predicted_change_pct": round(predicted_change_pct, 2),
             "trend": p.get("trend", "ESTABLE"),
+            "display_label": display_label, 
             "puntos_clave_fechas": puntos_clave,
             "sentiment_compound": 0.0,
             "sentiment_label": "NEUTRAL",
@@ -104,7 +110,7 @@ def extraer_datos_consolidados_agricolas():
                 },
                 upsert=True
             )
-        print(f"¡Éxito! {len(datos_finales)} activos procesados y almacenados en 'market_summary'.")
+        print(f"¡Éxito! {len(datos_finales)} activos procesados, normalizados a USD y almacenados en 'market_summary'.")
     except Exception as e:
         print(f"Error al guardar en 'market_summary': {e}")
 
