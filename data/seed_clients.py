@@ -11,25 +11,11 @@ def seed_test_clients():
             "email": "sebastianmartinlucich@gmail.com", 
             "watchlist": ["rice", "cotton"],
             "preferencia": (
-                "Empresario agroindustrial interesado en importar Arroz y Algodón. "
-                "Necesito identificar la ventana oportuna de importación por caída de precios "
-                "y la duración estimada de dicha bajada para planificar mis compras estratégicas."
+                "Somos una empresa agroindustrial enfocada en la exportación de arroz y trigo al mercado internacional. Necesitamos saber con precisión cuál de los dos productos presenta un mejor horizonte de rentabilidad y proyección futura basada en el precio actual, ya que requerimos enfocar nuestros recursos y capital de inversión en uno de ellos. Queremos un análisis detallado que nos indique precios actuales, unidades de cotización, tendencias cercanas y una recomendación clara sobre cuál commodity priorizar y en qué fechas o meses críticos debemos tener cuidado ante posibles bajas para asegurar una decisión comercial rentable."
             ),
             "active": True,
             "created_at": datetime.now(timezone.utc)
         }
-        # {
-        #     "name": "María Gómez",
-        #     "email": "sebastianmarlucichmunoz@gmail.com",
-        #     "watchlist": ["corn", "wheat"],
-        #     "preferencia": (
-        #         "Compradora de insumos de alimentos balanceados. "
-        #         "Busco alertas de alzas de precio en Maíz y Trigo para realizar compras anticipadas "
-        #         "y proteger el margen operativo de producción."
-        #     ),
-        #     "active": True,
-        #     "created_at": datetime.now(timezone.utc)
-        # }
     ]
     
     db.clients.insert_many(clientes_iniciales)

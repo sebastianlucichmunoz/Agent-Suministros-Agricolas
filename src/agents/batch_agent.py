@@ -69,9 +69,9 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
     1. ANÁLISIS: Utiliza exclusivamente los datos cuantitativos proporcionados. Evalúa el precio actual, su evolución histórica, las variaciones y las proyecciones disponibles. No utilices noticias, opiniones externas ni sentimiento del mercado.
     2. PRECIOS Y FECHAS: Menciona el precio actual y su unidad comercial exacta. Explica cuánto podría subir o bajar, en dólares y porcentaje cuando sea posible, e identifica las fechas relevantes. No inventes datos ni conversiones. Presenta las proyecciones como estimaciones, nunca como certezas.
     3. RECOMENDACIÓN DE COMPRA:
-    - COMPRAR_ANTICIPADO: si se prevé un encarecimiento relevante que justifique comprar antes.
+    - COMPRAR ANTICIPADO: si se prevé un encarecimiento relevante que justifique comprar antes.
     - MANTENER: si las variaciones son pequeñas, inciertas o no justifican cambiar el momento de compra.
-    - POSTERGAR_COMPRAS: si se espera una reducción relevante y es razonable esperar sin comprometer el abastecimiento.
+    - POSTERGAR COMPRAS: si se espera una reducción relevante y es razonable esperar sin comprometer el abastecimiento.
 
     Considera la magnitud del cambio, su duración, las posibles fluctuaciones intermedias y la incertidumbre. No recomiendes esperar únicamente porque el precio podría bajar si el ahorro sería mínimo o el riesgo de encarecimiento es importante. Si las señales son contradictorias, prioriza la prudencia.
 
