@@ -215,7 +215,7 @@ with m1:
     )
 
 with m2:
-    m2.metric("Tendencia (180d)", trend)
+    m2.metric("Tendencia", trend)
 
 with m3:
     m3.metric("Proyección Acumulada", f"{predicted_change:+.2f}%")
