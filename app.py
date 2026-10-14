@@ -116,7 +116,7 @@ st.markdown(f"""
     <img src="{AGRO_BANNER_URL}" style="width: 250px; height: 100px; object-fit: cover; border-radius: 12px; box-shadow: 2px 4px 6px rgba(0,0,0,0.1);">
     <div>
         <h1 style="margin: 0; color: #0F172A; font-size: 2.3rem; font-weight: 800; line-height: 1.1;">Panel de Suministros Agrícolas</h1>
-        <p style="margin: 0; color: #64748B; font-size: 1.05rem; font-weight: 500;">Monitoreo inteligente de insumos - Apoyo a decisiones logísticas</p>
+        <p style="margin: 0; color: #64748B; font-size: 1.05rem; font-weight: 500;">Monitoreo inteligente - Apoyo a decisiones logísticas</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
