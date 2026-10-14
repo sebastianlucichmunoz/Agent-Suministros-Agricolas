@@ -122,7 +122,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # FILTROS Y BARRA LATERAL 
-st.sidebar.markdown("### 🌾 Menú de Insumo")
+st.sidebar.markdown("### 🌾 Menú")
 
 db = get_db()
 
@@ -150,7 +150,7 @@ catalog = load_catalog_map()
 asset_options = {info.get("name_es", asset_key): asset_key for asset_key, info in catalog.items()}
 
 selected_name = st.sidebar.selectbox(
-    "Insumo Agrícola",
+    "Materia prima agrícola",
     options=list(asset_options.keys())
 )
 
