@@ -10,7 +10,7 @@ from src.api_clients.yfinance_client import YFinanceAgriClient
 def run_ingestion():
     db = get_db()
     client = YFinanceAgriClient()
-    registros = client.fetch_ohlcv_history(period="3y", interval="1d")
+    registros = client.fetch_ohlcv_history(period="10y", interval="1d")
     
     if not registros:
         return

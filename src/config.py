@@ -25,7 +25,7 @@ class Settings:
     smtp_user: str = os.getenv("SMTP_USER", "")
     smtp_pass: str = os.getenv("SMTP_PASS", "")
     email_from: str = os.getenv("EMAIL_FROM", "")
-    history_days: int = env_int("HISTORY_DAYS", 365)
+    history_days: int = env_int("HISTORY_DAYS", 3650)
     model_min_rows: int = env_int("MODEL_MIN_ROWS", 90)
     prediction_neutral_threshold_pct: float = env_float("PREDICTION_NEUTRAL_THRESHOLD_PCT", 0.50)
     rss_reuters_commodity: str = os.getenv(
