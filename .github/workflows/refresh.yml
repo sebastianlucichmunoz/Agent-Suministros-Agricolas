@@ -1,4 +1,5 @@
-name: Agri Analytics - Refresh & Alerts Pipeline
+
+name: Agri Analytics - Refresh & AI Pipeline
 
 on:
   workflow_dispatch:
@@ -7,13 +8,16 @@ on:
         description: "Historico + reentrenamiento"
         required: false
         default: "false"
+
   schedule:
-    # Ingesta y predicciones: 07:00 y 18:00 UTC
+    # Actualización de mercado: 02:00 y 13:00 Perú
     - cron: "0 7,18 * * *"
-    # Agente Dictaminador Macro Gemini: 05:00 UTC
-    - cron: "0 5 * * *"
-    # Agente Notificaciones y Correos: 08:00 UTC
-    - cron: "0 8 * * *"
+
+    # Dictámenes: 03:00 y 14:00 Perú
+    - cron: "0 8,19 * * *"
+
+    # Consultas programadas: 08:00 Perú
+    - cron: "0 13 * * *"
 
 jobs:
   pipeline:
@@ -39,9 +43,9 @@ jobs:
 
       - run: python -m pip install -r requirements.txt
 
-      # PASO 1: Ingesta de datos de mercado y modelos predictivos
-      - name: PASO 1 - Actualizar datos de mercado y predicciones
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 7,18 * * *'))
+      # PASO 1: Actualizar precios y predicciones
+      - name: PASO 1 - Actualizar datos y predicciones
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 7,18 * * *'
         run: |
           if [ "${{ inputs.daily }}" == "true" ]; then
             python scripts/refresh.py --daily
@@ -49,12 +53,76 @@ jobs:
             python scripts/refresh.py
           fi
 
-      # PASO 2: Agente Dictaminador General 
-      - name: PASO 2 - Generar Dictámenes Macro con Gemini
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 5 * * *')
+      # PASO 2: Dictámenes generales del mercado
+      - name: PASO 2 - Generar dictamenes con Gemini
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 8,19 * * *'
         run: python -m src.agents.batch_agent
 
-      # PASO 3: Agente de Notificaciones y Envío de Correos
-      - name: PASO 3 - Orquestar Alertas Agrícolas y Correos (run_agro_alerts)
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * *')
-        run: python -m src.agents.run_agro_alerts
+      # PASO 3: Consultas empresariales programadas
+      - name: PASO 3 - Procesar consultas programadas
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 13 * * *'
+        run: python -m src.agents.scheduled_consultations
+
+
+
+
+# name: Agri Analytics - Refresh & Alerts Pipeline
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       daily:
+#         description: "Historico + reentrenamiento"
+#         required: false
+#         default: "false"
+#   schedule:
+#     # Ingesta y predicciones: 07:00 y 18:00 UTC
+#     - cron: "0 7,18 * * *"
+#     # Agente Dictaminador Macro Gemini: 05:00 UTC
+#     - cron: "0 5 * * *"
+#     # Agente Notificaciones y Correos: 08:00 UTC
+#     - cron: "0 8 * * *"
+
+# jobs:
+#   pipeline:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 30
+
+#     env:
+#       MONGODB_URI: ${{ secrets.MONGODB_URI }}
+#       MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
+#       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+#       SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+#       SMTP_PORT: ${{ secrets.SMTP_PORT }}
+#       SMTP_USER: ${{ secrets.SMTP_USER }}
+#       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
+#           cache: "pip"
+
+#       - run: python -m pip install -r requirements.txt
+
+#       # PASO 1: Ingesta de datos de mercado y modelos predictivos
+#       - name: PASO 1 - Actualizar datos de mercado y predicciones
+#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && (github.event.schedule == '0 7,18 * * *'))
+#         run: |
+#           if [ "${{ inputs.daily }}" == "true" ]; then
+#             python scripts/refresh.py --daily
+#           else
+#             python scripts/refresh.py
+#           fi
+
+#       # PASO 2: Agente Dictaminador General 
+#       - name: PASO 2 - Generar Dictámenes Macro con Gemini
+#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 5 * * *')
+#         run: python -m src.agents.batch_agent
+
+#       # PASO 3: Agente de Notificaciones y Envío de Correos
+#       - name: PASO 3 - Orquestar Alertas Agrícolas y Correos (run_agro_alerts)
+#         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * *')
+#         run: python -m src.agents.run_agro_alerts

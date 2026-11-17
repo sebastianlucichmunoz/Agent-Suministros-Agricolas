@@ -9,7 +9,6 @@ from google.genai import types
 from src.data.extractor import extraer_datos_consolidados_agricolas
 from src.db import get_db
 from src.agents.consultation_agent import _datos_insumo
-from src.agents.scheduled_consultations import ejecutar_consultas_programadas
 
 load_dotenv()
 
@@ -231,19 +230,13 @@ def _ejecutar_dictamen_diario_agricola():
 
 
 # ===== ORQUESTACIÓN DE DICTÁMENES Y CONSULTAS PROGRAMADAS =====
+# ===== EJECUCIÓN DEL AGENTE DE DICTÁMENES =====
 def ejecutar_proceso_diario_agricola():
-    try:
-        _ejecutar_dictamen_diario_agricola()
-    finally:
-        ejecutar_consultas_programadas()
+    _ejecutar_dictamen_diario_agricola()
 
 
 if __name__ == "__main__":
-    import sys
-    if "--programadas" in sys.argv:
-        ejecutar_consultas_programadas()
-    else:
-        ejecutar_proceso_diario_agricola()
+    ejecutar_proceso_diario_agricola()
 
 
 
