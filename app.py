@@ -360,6 +360,50 @@ st.markdown("""
 [data-testid="stMain"] [data-testid="stExpander"] summary span {color:#173454 !important;}
 [data-testid="stMain"] [data-testid="stPlotlyChart"] {background:#FFFFFF;border:1px solid #DFE8F0;border-radius:13px;padding:8px 4px;}
 [data-testid="stMain"] [data-testid="stPlotlyChart"] .legendtext {fill:#173454 !important;}
+/* ===== LEGIBILIDAD DE ACCESO Y REGISTRO ===== */
+div[data-testid="stDialog"] [role="dialog"] h1,
+div[data-testid="stDialog"] [role="dialog"] h2,
+div[data-testid="stDialog"] [role="dialog"] h3,
+div[data-testid="stDialog"] [role="dialog"] label,
+div[data-testid="stDialog"] [role="dialog"] label p,
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stCaptionContainer"] p,
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] p {
+    color:#123453 !important;
+    -webkit-text-fill-color:#123453 !important;
+}
+div[data-testid="stDialog"] [role="dialog"] > div,
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stForm"] {background:#FFFFFF !important;}
+div[data-testid="stDialog"] [role="dialog"] button[kind="primary"],
+div[data-testid="stDialog"] [role="dialog"] button[kind="primary"] p,
+div[data-testid="stDialog"] [role="dialog"] button[data-testid="stBaseButton-primary"] p {
+    color:#FFFFFF !important;
+    -webkit-text-fill-color:#FFFFFF !important;
+}
+div[data-testid="stDialog"] [role="dialog"] button[kind="secondary"] p,
+div[data-testid="stDialog"] [role="dialog"] button[data-testid="stBaseButton-secondary"] p {
+    color:#123453 !important;
+    -webkit-text-fill-color:#123453 !important;
+}
+/* ===== CONSULTAS Y PANEL DE EVALUACIÓN ===== */
+.consulta-success {background:#16783B;border:1px solid #126332;color:#FFFFFF !important;
+    border-radius:10px;padding:12px 15px;margin:12px 0;font-size:.88rem;font-weight:650;}
+.consulta-success * {color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF !important;}
+.metric-side {padding:11px 12px !important;}
+.metric-side h3 {font-size:1rem !important;line-height:1.2;margin-bottom:4px;}
+.metric-side .context {font-size:.72rem !important;margin-bottom:8px !important;}
+.metric-item {padding:8px 10px !important;margin:7px 0 !important;border-radius:9px !important;}
+.metric-item .name {font-size:.74rem !important;line-height:1.2;}
+.metric-item .num {font-size:1.2rem !important;margin:3px 0 !important;}
+.metric-item .detail {font-size:.7rem !important;line-height:1.32 !important;}
+.metric-foot {font-size:.67rem !important;line-height:1.35 !important;margin-top:7px !important;}
+.consulta-evaluacion {background:#EFF8F0 !important;border-color:#BFDCC9 !important;
+    border-left:3px solid #16803B !important;color:#123453 !important;}
+.consulta-evaluacion strong,.consulta-evaluacion div {color:#123453 !important;}
+[data-testid="stMain"] [data-testid="stExpander"] details,
+[data-testid="stMain"] [data-testid="stExpander"] summary,
+[data-testid="stMain"] [data-testid="stExpander"] summary:hover {background:#FFFFFF !important;}
+[data-testid="stMain"] [data-testid="stExpander"] summary p {color:#17436A !important;-webkit-text-fill-color:#17436A !important;}
+
 @media(max-width:850px){.agro-header {grid-template-columns:90px 1fr !important;}.agro-header-image{width:85px !important;height:65px !important;}}
 </style>
 """, unsafe_allow_html=True)
@@ -423,11 +467,11 @@ def switch_auth(view):
 
 
 # ===== POPUPS DE INICIO DE SESIÓN Y REGISTRO =====
-@st.dialog("Acceso empresarial", width="small")
+@st.dialog("Acceso al panel empresarial", width="small")
 def auth_dialog():
     if st.session_state.auth_view == "login":
-        st.markdown("### Iniciar sesión")
-        st.caption("Ingresa con el correo y la contraseña de tu cuenta.")
+        st.markdown("### Bienvenido nuevamente")
+        st.caption("Accede a tus consultas y recomendaciones personalizadas.")
         with st.form("login_form", clear_on_submit=False):
             email = st.text_input("Correo electrónico", placeholder="correo@empresa.com")
             password = st.text_input("Contraseña", type="password")
@@ -457,8 +501,8 @@ def auth_dialog():
         if st.button("¿No tienes una cuenta? Regístrate", use_container_width=True):
             switch_auth("register")
     else:
-        st.markdown("### Crear cuenta")
-        st.caption("Registra tus datos para acceder a futuras consultas personalizadas.")
+        st.markdown("### Regístrate como usuario")
+        st.caption("Crea tu cuenta para consultar precios y recibir recomendaciones agrícolas.")
         with st.form("register_form", clear_on_submit=False):
             col1, col2 = st.columns(2)
             with col1:
@@ -585,22 +629,28 @@ def mostrar_evaluacion_consulta(registro):
     filas = []
     for asset in insumos:
         item = resultados.get(asset) or {}
-        valor = item.get("r2")
+        try:
+            valor = float(item["r2"])
+            if not np.isfinite(valor):
+                valor = None
+        except (KeyError, TypeError, ValueError):
+            valor = None
         nombre = escape(INTEREST_NAMES.get(asset, asset))
         if valor is None:
-            filas.append(f"<div><strong>{nombre}:</strong> sin evaluación disponible.</div>")
+            filas.append(f'<div><strong>{nombre}:</strong> sin datos de evaluación.</div>')
             continue
         horizonte = item.get("horizonte_sesiones")
-        if 0 <= float(valor) <= 1:
-            detalle = f"R² {float(valor):.3f} · {float(valor)*100:.1f}% de variación explicada"
+        periodo = f" · {horizonte} sesión(es)" if horizonte is not None else ""
+        if 0 <= valor <= 1:
+            detalle = f"R² {valor:.3f} · {valor*100:.1f}% de variación explicada"
         else:
-            detalle = f"R² {float(valor):.3f}"
-        filas.append(f"<div><strong>{nombre}:</strong> {escape(detalle)} · {horizonte} sesión(es)</div>")
+            detalle = f"R² {valor:.3f}"
+        filas.append(f'<div><strong>{nombre}:</strong> {escape(detalle + periodo)}</div>')
     if filas:
         st.markdown(
-            '<div class="consulta-evaluacion"><strong>📊 Evaluación de las predicciones</strong>'
+            '<div class="consulta-evaluacion"><strong>📊 Evaluación de los precios estimados</strong>'
             + ''.join(filas)
-            + '<div style="margin-top:4px;color:#607387;">Estos resultados corresponden a horizontes evaluados; no representan probabilidades de acierto a seis meses.</div></div>',
+            + '<div style="margin-top:5px;font-size:.74rem;">El R² indica ajuste en las pruebas, no probabilidad de acertar un precio futuro.</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -655,124 +705,262 @@ def render_profile():
             st.markdown(f'<div class="profile-row"><strong>{label}</strong><span>{value or "—"}</span></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ===== PERFIL: CONSULTA PERSONALIZADA A GEMINI =====
+
+    # ===== PERFIL: CONSULTAS INSTANTÁNEAS Y PROGRAMADAS =====
     with c_ai:
-        st.markdown('<div class="profile-card-head profile-green">✦ &nbsp; Consulta a la IA</div>', unsafe_allow_html=True)
-        st.markdown('<div class="consulta-guia">Consulta cotizaciones, compara insumos y conoce posibles cambios de precio durante los próximos <strong>6 meses</strong>. El asesor se centra exclusivamente en precios y decisiones de compra o venta.</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="profile-card-head profile-green">'
+            '✦ &nbsp; Consulta a la IA</div>',
+            unsafe_allow_html=True,
+        )
 
-        favoritos = [k for k in user.get("watchlist", []) if k in INTEREST_NAMES]
-        todos = list(INTEREST_NAMES)
-        opciones = favoritos + [k for k in todos if k not in favoritos]
+        st.markdown(
+            '<div class="consulta-guia">'
+            'Consulta cotizaciones, compara insumos y conoce posibles '
+            'cambios de precio durante los próximos <strong>6 meses</strong>. '
+            'El asesor se centra en precios y decisiones de compra o venta.'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
-        try:
-            cupo = cupo_disponible(user_session["client_id"])
-            st.markdown(
-                f'<div style="background:#ECF8EF;border:1px solid #C8E5D0;border-radius:9px;padding:11px 14px;margin:12px 0 16px;color:#126334;font-size:.85rem;font-weight:650;">🌱 Consultas disponibles hoy: {cupo["restantes"]} de {cupo["limite"]} (UTC)</div>',
-                unsafe_allow_html=True,
-            )
-        except Exception:
-            cupo = {"restantes": 0}
-            st.warning("No se pudo verificar el límite diario de consultas.")
+        favoritos = [
+            k for k in user.get("watchlist", [])
+            if k in INTEREST_NAMES
+        ]
 
-        with st.form("consultation_form", clear_on_submit=False):
-            insumos = st.multiselect(
-                "Insumos o productos (máximo 5)",
-                options=opciones,
-                default=favoritos[:1],
-                format_func=lambda k: INTEREST_NAMES.get(k, k),
-                key="consultation_assets",
-            )
-            pregunta = st.text_area(
-                "¿Qué deseas conocer sobre sus precios?",
-                height=148,
-                max_chars=600,
-                placeholder="Ej.: ¿Sería conveniente comprar maíz ahora o esperar al próximo mes?",
-                key="consultation_question",
-            )
-            enviar_correo = st.checkbox(
-                "Enviar una copia de la respuesta a mi correo",
-                value=False,
-                key="consultation_email",
-            )
-            enviado = st.form_submit_button(
-                "✦ Consultar a la IA", use_container_width=True,
-                type="primary", disabled=cupo["restantes"] <= 0,
-            )
+        opciones = favoritos + [
+            k for k in INTEREST_NAMES if k not in favoritos
+        ]
 
-        if enviado:
-            if not 1 <= len(insumos) <= 5:
-                st.error("Selecciona de 1 a 5 insumos.")
-            elif not 12 <= len(pregunta.strip()) <= 600:
-                st.error("Escribe una pregunta de entre 12 y 600 caracteres.")
-            else:
-                with st.spinner("Analizando los precios y preparando tu recomendación..."):
-                    try:
-                        resultado = ejecutar_consulta(
-                            cliente_id=user_session["client_id"],
-                            insumos=insumos,
-                            pregunta=pregunta.strip(),
-                            enviar_correo=enviar_correo,
-                        )
-                        st.session_state.ultima_consulta_ia = resultado
-                        if resultado.get("estado") == "Completado":
-                            st.success("Consulta completada y registrada en el historial.")
-                        else:
-                            st.error("No fue posible completar la consulta.")
-                    except Exception as error:
-                        st.session_state.pop("ultima_consulta_ia", None)
-                        st.error(f"No se pudo procesar la consulta: {error}")
+        # ===== SELECTOR DEL TIPO DE CONSULTA =====
+        modo_consulta = st.segmented_control(
+            "Tipo de consulta",
+            options=["Instantáneas", "Programadas"],
+            default="Instantáneas",
+            key="tipo_consulta_ia",
+            selection_mode="single",
+            label_visibility="collapsed",
+            width="stretch",
+        )
 
-        respuesta_actual = st.session_state.get("ultima_consulta_ia")
-        if (
-            respuesta_actual
-            and respuesta_actual.get("cliente_id") == user_session["client_id"]
-            and respuesta_actual.get("estado") == "Completado"
-        ):
-            texto = escape(str(respuesta_actual.get("respuesta_ia") or ""))
-            accion = escape(str(respuesta_actual.get("accion_prioritaria") or ""))
-            st.markdown(
-                f'<div class="consulta-respuesta"><h4>🌱 Respuesta del asesor agrícola</h4><p>{texto}</p></div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                f'<div class="consulta-accion"><h4>🎯 Acción prioritaria</h4><p>{accion}</p></div>',
-                unsafe_allow_html=True,
-            )
-            mostrar_evaluacion_consulta(respuesta_actual)
-            if respuesta_actual.get("enviar_correo"):
-                if respuesta_actual.get("correo_enviado"):
-                    st.success("Se envió una copia de la respuesta a tu correo registrado.")
+        if modo_consulta == "Instantáneas":
+
+            # ===== FORMULARIO DE CONSULTAS INSTANTÁNEAS =====
+            try:
+                cupo = cupo_disponible(user_session["client_id"])
+                restantes = cupo["restantes"]
+                limite = cupo["limite"]
+            except Exception:
+                restantes = 0
+                limite = 5
+                st.warning("No se pudo verificar el cupo disponible.")
+
+            with st.container(border=True):
+                st.markdown(
+                    f"""
+                    <div style="
+                        background:#ECF8EF;
+                        border:1px solid #C8E5D0;
+                        border-radius:9px;
+                        padding:11px 14px;
+                        margin-bottom:14px;
+                        color:#126334;
+                        font-size:.85rem;
+                        font-weight:650;">
+                        🌱 Consultas disponibles hoy:
+                        {restantes} de {limite}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                with st.form(
+                    "consultation_form",
+                    clear_on_submit=False,
+                ):
+                    insumos = st.multiselect(
+                        "Insumos o productos (máximo 5)",
+                        options=opciones,
+                        default=favoritos[:1],
+                        format_func=lambda k: INTEREST_NAMES.get(k, k),
+                        key="consultation_assets",
+                    )
+
+                    pregunta = st.text_area(
+                        "¿Qué deseas conocer sobre sus precios?",
+                        height=148,
+                        max_chars=600,
+                        placeholder=(
+                            "Ej.: ¿Me conviene comprar maíz ahora "
+                            "o esperar al próximo mes?"
+                        ),
+                        key="consultation_question",
+                    )
+
+                    enviar_correo = st.checkbox(
+                        "Enviar una copia de la respuesta a mi correo",
+                        value=False,
+                        key="consultation_email",
+                    )
+
+                    enviado = st.form_submit_button(
+                        "✦ Consultar a la IA",
+                        use_container_width=True,
+                        type="primary",
+                        disabled=restantes <= 0,
+                    )
+
+            # ===== PROCESAMIENTO DE LA CONSULTA =====
+            if enviado:
+                if not 1 <= len(insumos) <= 5:
+                    st.error("Selecciona de 1 a 5 insumos.")
+
+                elif not 12 <= len(pregunta.strip()) <= 600:
+                    st.error(
+                        "Escribe una pregunta de entre "
+                        "12 y 600 caracteres."
+                    )
+
                 else:
-                    st.warning("La consulta se guardó, pero no se pudo enviar la copia al correo.")
+                    with st.spinner(
+                        "Analizando los precios y preparando "
+                        "tu recomendación..."
+                    ):
+                        try:
+                            resultado = ejecutar_consulta(
+                                cliente_id=user_session["client_id"],
+                                insumos=insumos,
+                                pregunta=pregunta.strip(),
+                                enviar_correo=enviar_correo,
+                            )
 
-        st.markdown('<div style="margin-top:20px"></div>', unsafe_allow_html=True)
-        if "programacion_abierta" not in st.session_state:
-            st.session_state.programacion_abierta = False
-        if st.button("🕗 Consultas programables", use_container_width=True, key="toggle_programadas"):
-            st.session_state.programacion_abierta = not st.session_state.programacion_abierta
+                            st.session_state.ultima_consulta_ia = resultado
 
-        if st.session_state.programacion_abierta:
-            st.markdown(
-                '<div class="programacion-info"><strong>Consultas por correo a las 8:00 a. m. (hora de Lima).</strong> Puedes dejar hasta dos consultas para la próxima entrega. No consumen tu cupo de consultas inmediatas.</div>',
-                unsafe_allow_html=True,
+                            if resultado.get("estado") == "Completado":
+                                st.success(
+                                    "Consulta completada y registrada "
+                                    "en el historial."
+                                )
+                            else:
+                                st.error(
+                                    "No fue posible completar la consulta."
+                                )
+
+                        except Exception as error:
+                            st.session_state.pop(
+                                "ultima_consulta_ia", None
+                            )
+                            st.error(
+                                f"No se pudo procesar la consulta: {error}"
+                            )
+
+            # ===== RESPUESTA DE LA IA =====
+            respuesta_actual = st.session_state.get(
+                "ultima_consulta_ia"
             )
-            with st.form("scheduled_consultation_form", clear_on_submit=False):
-                insumos_prog = st.multiselect(
-                    "Insumos para la consulta programada",
-                    options=opciones,
-                    default=favoritos[:1],
-                    format_func=lambda k: INTEREST_NAMES.get(k, k),
-                    key="scheduled_assets",
+
+            if (
+                respuesta_actual
+                and respuesta_actual.get("cliente_id")
+                == user_session["client_id"]
+                and respuesta_actual.get("estado") == "Completado"
+            ):
+                texto = escape(
+                    str(respuesta_actual.get("respuesta_ia") or "")
                 )
-                pregunta_prog = st.text_area(
-                    "¿Qué deseas consultar mañana o en la próxima entrega?",
-                    height=115,
-                    max_chars=600,
-                    placeholder="Ej.: Compara la evolución prevista del trigo y del maíz para los próximos tres meses.",
-                    key="scheduled_question",
+
+                accion = escape(
+                    str(respuesta_actual.get("accion_prioritaria") or "")
                 )
-                st.caption("La respuesta se enviará al correo de tu cuenta. No se enviará automáticamente si el procesamiento falla.")
-                programar = st.form_submit_button("Programar consulta", use_container_width=True)
+
+                st.markdown(
+                    f"""
+                    <div class="consulta-respuesta">
+                        <h4>🌱 Respuesta del asesor agrícola</h4>
+                        <p>{texto}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown(
+                    f"""
+                    <div class="consulta-accion">
+                        <h4>🎯 Acción prioritaria</h4>
+                        <p>{accion}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                mostrar_evaluacion_consulta(respuesta_actual)
+
+                if respuesta_actual.get("enviar_correo"):
+                    if respuesta_actual.get("correo_enviado"):
+                        st.success(
+                            "Se envió una copia a tu correo registrado."
+                        )
+                    else:
+                        st.warning(
+                            "La consulta se guardó, pero no se pudo "
+                            "enviar la copia al correo."
+                        )
+
+        elif modo_consulta == "Programadas":
+
+            # ===== FORMULARIO DE CONSULTAS PROGRAMADAS =====
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div class="programacion-info">
+                        <strong>
+                            🕗 Consultas por correo a las 8:00 a. m.
+                            (hora de Lima).
+                        </strong>
+                        Puedes programar hasta 10 consultas por entrega.
+                        No consumen tu cupo de consultas instantáneas.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                with st.form(
+                    "scheduled_consultation_form",
+                    clear_on_submit=False,
+                ):
+                    insumos_prog = st.multiselect(
+                        "Insumos para la consulta programada",
+                        options=opciones,
+                        default=favoritos[:1],
+                        format_func=lambda k: INTEREST_NAMES.get(k, k),
+                        key="scheduled_assets",
+                    )
+
+                    pregunta_prog = st.text_area(
+                        "¿Qué deseas consultar en la próxima entrega?",
+                        height=115,
+                        max_chars=600,
+                        placeholder=(
+                            "Ej.: Compara la evolución prevista "
+                            "del trigo y del maíz para los "
+                            "próximos tres meses."
+                        ),
+                        key="scheduled_question",
+                    )
+
+                    st.caption(
+                        "La respuesta se enviará al correo registrado. "
+                        "Si el procesamiento falla, no se enviará "
+                        "una respuesta incompleta."
+                    )
+
+                    programar = st.form_submit_button(
+                        "🕗 Programar consulta",
+                        use_container_width=True,
+                        type="primary",
+                    )
+
+            # ===== REGISTRO DE LA PROGRAMACIÓN =====
             if programar:
                 try:
                     registro = programar_consulta(
@@ -780,10 +968,22 @@ def render_profile():
                         insumos=insumos_prog,
                         pregunta=pregunta_prog.strip(),
                     )
-                    fecha_local = registro["programada_para"].astimezone(ZoneInfo("America/Lima"))
-                    st.success(f"Consulta programada para el {fecha_local:%d/%m/%Y} a las 08:00 (Lima).")
-                except Exception as exc:
-                    st.error(f"No se pudo programar la consulta: {exc}")
+
+                    fecha_local = registro[
+                        "programada_para"
+                    ].astimezone(ZoneInfo("America/Lima"))
+
+                    st.success(
+                        f"Consulta programada para el "
+                        f"{fecha_local:%d/%m/%Y} a las 08:00 "
+                        f"(hora de Lima)."
+                    )
+
+                except Exception as error:
+                    st.error(
+                        f"No se pudo programar la consulta: {error}"
+                    )
+
 
     # ===== PERFIL: HISTORIAL DE CONSULTAS ALMACENADAS =====
     with c_history:
@@ -812,9 +1012,7 @@ def render_profile():
             fechas = [r["fecha_local"] for r in historial if "fecha_local" in r]
             anios = sorted({d.year for d in fechas}, reverse=True)
             meses = sorted({d.month for d in fechas})
-            col_d, col_m, col_y = st.columns(3, gap="small")
-            with col_d:
-                dia = st.selectbox("Día", ["Todos"] + list(range(1, 32)), key="hist_day")
+            col_m, col_y = st.columns(2, gap="small")
             with col_m:
                 mes = st.selectbox("Mes", ["Todos"] + meses, key="hist_month")
             with col_y:
@@ -823,8 +1021,6 @@ def render_profile():
             for item in historial:
                 fecha = item.get("fecha_local")
                 if fecha is None:
-                    continue
-                if dia != "Todos" and fecha.day != dia:
                     continue
                 if mes != "Todos" and fecha.month != mes:
                     continue
@@ -844,7 +1040,7 @@ def render_profile():
                 simbolo = {"Completado": "✅", "Error": "⚠️", "Programada": "🕗", "Procesando": "⏳"}.get(estado, "•")
                 tipo = " · Programada" if item.get("tipo") == "programada" else ""
                 with st.expander(f"{simbolo} {fecha} · {nombres}{tipo}", expanded=False):
-                    st.markdown("**Pregunta realizada**")
+                    st.markdown('<div style="font-weight:750;color:#126334;margin:7px 0 6px;">Pregunta realizada</div>', unsafe_allow_html=True)
                     st.markdown(
                         f'<div style="background:#F1F5F9;color:#173454;padding:12px;border-radius:9px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-line;">{escape(str(item.get("pregunta") or ""))}</div>',
                         unsafe_allow_html=True,
@@ -878,24 +1074,30 @@ if st.session_state.auth_user and st.session_state.current_page == "profile":
     render_profile()
     st.stop()
 
-header_spacer, header_access, header_logout = st.columns([3.6, 1.2, 1.1])
-with header_access:
-    if st.session_state.auth_user is None:
+# ===== ACCESO ALINEADO A LA DERECHA SIN ABRIR SESIÓN AUTOMÁTICAMENTE =====
+def cerrar_sesion_dashboard():
+    st.session_state.auth_user = None
+    st.session_state.auth_view = None
+    for estado_key in ("ultima_consulta_ia", "consultation_assets", "consultation_question", "consultation_email", "scheduled_assets", "scheduled_question", "programacion_abierta"):
+        st.session_state.pop(estado_key, None)
+    st.session_state.current_page = "dashboard"
+    st.rerun()
+
+if st.session_state.auth_user is None:
+    espacio_cabecera, acceso_cabecera = st.columns([5, 1.25], gap="small")
+    with acceso_cabecera:
         if st.button("Ingresar como usuario", use_container_width=True, key="open_login"):
             st.session_state.auth_view = "login"
-    else:
+            st.rerun()
+else:
+    espacio_cabecera, perfil_cabecera, salida_cabecera = st.columns([4.7, 1.15, 1.15], gap="small")
+    with perfil_cabecera:
         if st.button("Mi perfil", use_container_width=True, key="open_profile"):
             st.session_state.current_page = "profile"
             st.rerun()
-with header_logout:
-    if st.session_state.auth_user is not None:
+    with salida_cabecera:
         if st.button("Cerrar sesión", use_container_width=True, key="logout_dashboard"):
-            st.session_state.auth_user = None
-            st.session_state.auth_view = None
-            for estado_key in ("ultima_consulta_ia", "consultation_assets", "consultation_question", "consultation_email", "scheduled_assets", "scheduled_question", "programacion_abierta"):
-                st.session_state.pop(estado_key, None)
-            st.session_state.current_page = "dashboard"
-            st.rerun()
+            cerrar_sesion_dashboard()
 
 if st.session_state.auth_view is not None and st.session_state.auth_user is None:
     auth_dialog()
@@ -964,7 +1166,14 @@ def safe_number(value):
 
 catalog = load_catalog_map()
 asset_options = {info.get("name_es", asset_key): asset_key for asset_key, info in catalog.items()}
-selected_name = st.sidebar.selectbox("Insumo o producto", options=list(asset_options.keys()))
+
+def cerrar_dialogo_en_filtros():
+    st.session_state.auth_view = None
+
+selected_name = st.sidebar.selectbox(
+    "Insumo o producto", options=list(asset_options.keys()),
+    on_change=cerrar_dialogo_en_filtros,
+)
 asset_id = asset_options[selected_name]
 asset_info = catalog.get(asset_id, {})
 asset_title = asset_info.get("name_es", selected_name)
@@ -984,6 +1193,7 @@ period_choices = {
 selected_period = st.sidebar.selectbox(
     "Periodo de análisis", options=list(period_choices), index=4,
     format_func=lambda key: period_choices[key][0],
+    on_change=cerrar_dialogo_en_filtros,
 )
 
 @st.cache_data(ttl=900)
@@ -1053,9 +1263,6 @@ with m3:
     <div class="caption">Proyección acumulada · 6 meses</div><div class="value" style="color:{pct_color}">{pct_text}</div>
     <div class="foot">Variación estimada respecto al precio base</div></div>''', unsafe_allow_html=True)
 
-if quote_ahead_of_model:
-    st.info("La última cotización es posterior al modelo predictivo disponible. Las cifras futuras se calcularon con una fecha base anterior; revisa la fecha del próximo entrenamiento.")
-
 # ===== DICTAMEN GENERAL DE INTELIGENCIA ARTIFICIAL =====
 st.markdown(f'<div class="dashboard-panel-title">🤖 Dictamen de IA para {escape(str(asset_title))}</div>', unsafe_allow_html=True)
 rec_data = db.agent_recommendations.find_one({}, sort=[("fecha_actualizacion", -1)]) or load_gemini_recommendations()
@@ -1095,7 +1302,7 @@ else:
 # ===== GRÁFICO INTEGRADO: HISTÓRICO Y PROYECCIÓN =====
 st.markdown('<div class="dashboard-panel-title">Evolución del precio y proyección a 6 meses</div>', unsafe_allow_html=True)
 st.markdown('<div class="dashboard-panel-subtitle">Precios reales en verde · Trayectoria estimada en amarillo · El marcador señala la última cotización disponible</div>', unsafe_allow_html=True)
-chart_col, metric_col = st.columns([4.0, 1.0], gap="medium")
+chart_col, metric_col = st.columns([4.55, 1.0], gap="small")
 
 with chart_col:
     if not plot_df.empty:
@@ -1114,6 +1321,27 @@ with chart_col:
             hovertemplate="<b>Última cotización</b><br>%{x|%d/%m/%Y}<br>Precio: $%{y:,.4f}<extra></extra>",
         ))
         fig.add_vline(x=last_trade.timestamp() * 1000, line_color="#64748B", line_dash="dot", line_width=1)
+        fig.add_annotation(
+            x=last_trade,
+            xref="x",
+            y=0.98,
+            yref="paper",
+            text=(
+                f"<b>Última cotización</b><br>"
+                f"{format_day(last_trade)} · "
+                f"{display_money(raw_current, conversion)}"
+            ),
+            showarrow=False,
+            xanchor="right",
+            xshift=-8,
+            yanchor="top",
+            align="center",
+            font=dict(size=9, color="#17436A"),
+            bgcolor="rgba(255,255,255,0.96)",
+            bordercolor="#BDD9C8",
+            borderwidth=1,
+            borderpad=4,
+        )
         forecasts = pred_doc.get("predictions_180d") or pred_doc.get("forecast") or []
         future_records = []
         for forecast in forecasts:
@@ -1139,7 +1367,7 @@ with chart_col:
         else:
             st.caption("Todavía no se dispone de una proyección posterior a la última cotización.")
         fig.update_layout(
-            template="plotly_white", height=530, margin=dict(l=18, r=14, t=48, b=24),
+            template="plotly_white", height=520, margin=dict(l=22, r=16, t=52, b=26),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             font=dict(color="#17304B", size=13), hovermode="closest",
             hoverlabel=dict(bgcolor="#173454", bordercolor="#15803D", font=dict(color="#FFFFFF", size=13)),
@@ -1191,7 +1419,7 @@ with metric_col:
     r2 = mejores_r2[1] if mejores_r2 else None
     if r2 is not None and 0 <= r2 <= 1:
         r2_display = f"{r2*100:.1f}%"
-        r2_texto = f"Variación de precios explicada en la evaluación · {mejores_r2[0]} sesión(es)"
+        r2_texto = f"Variación explicada en pruebas · {mejores_r2[0]} sesión(es)"
     elif r2 is not None:
         r2_display = f"{r2:.3f}"
         r2_texto = "El ajuste no superó la referencia en este horizonte"
@@ -1200,20 +1428,36 @@ with metric_col:
     wape = safe_number(dato_wape.get("value"))
     mae = safe_number(dato_mae.get("value"))
     dir_result = mejores_direccion[1] if mejores_direccion else None
+
+
     tarjetas = "".join([
-        metric_card("Ajuste de la predicción (R²)", r2_display, r2_texto),
-        metric_card("Diferencia porcentual (WAPE)", f"{wape:.2f}%" if wape is not None else "N/D",
-                    f"Diferencia porcentual de los precios en pruebas · {dato_wape.get('horizon_sessions', 'N/D')} sesión(es)"),
-        metric_card("Diferencia media de precio (MAE)", display_money(mae, conversion) if mae is not None else "N/D",
-                    f"Diferencia absoluta promedio en pruebas, por {unit_label.lower().removeprefix('por ')} · {dato_mae.get('horizon_sessions', 'N/D')} sesión(es)"),
-        metric_card("Acierto al anticipar subidas o bajadas", f"{dir_result:.1f}%" if dir_result is not None else "N/D",
-                    f"Dirección del movimiento acertada en pruebas · {mejores_direccion[0]} sesión(es)" if mejores_direccion else "No evaluada"),
+        metric_card(
+            "Precisión de la predicción",
+            r2_display,
+            "Coeficiente de determinación (R²)"
+        ),
+        metric_card(
+            "¿Cuánto puede variar el precio estimado?",
+            f"{wape:.2f}%" if wape is not None else "N/D",
+            "Error porcentual absoluto ponderado (WAPE)"
+        ),
+        metric_card(
+            "¿Qué monto representa la diferencia?",
+            display_money(mae, conversion) if mae is not None else "N/D",
+            "Error absoluto medio (MAE)"
+        ),
+        metric_card(
+            "¿Acertó la subida o bajada?",
+            f"{dir_result:.1f}%" if dir_result is not None else "N/D",
+            "Precisión direccional"
+        ),
     ])
+
     st.markdown(
-        f'<div class="metric-side"><h3>📊 Evaluación de las predicciones</h3>'
-        f'<div class="context">Resultados obtenidos en las pruebas del modelo</div>{tarjetas}'
-        f'<div class="metric-foot">Cada resultado puede proceder de un horizonte diferente. R² no es un porcentaje de aciertos ni garantiza resultados futuros.</div>'
-        f'<div class="metric-foot">Última evaluación: {format_day(metrics_doc.get("trained_at"))}</div></div>',
+        f'<div class="metric-side"><h3>📊 ¿Cómo rindió el modelo?</h3>'
+        f'<div class="context">Resultados de las pruebas históricas</div>{tarjetas}'
+        f'<div class="metric-foot">Cada indicador corresponde al horizonte señalado. R² no representa probabilidad de acierto.</div>'
+        f'<div class="metric-foot">Evaluado: {format_day(metrics_doc.get("trained_at"))}</div></div>',
         unsafe_allow_html=True,
     )
     if not metrics_doc:
@@ -1246,6 +1490,7 @@ if news_docs:
                 </div>''', unsafe_allow_html=True)
 else:
     st.info("No se encontraron noticias recientes para este insumo.")
+
 
 
 
