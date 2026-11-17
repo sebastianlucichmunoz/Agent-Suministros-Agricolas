@@ -752,7 +752,7 @@ def render_profile():
                 limite = cupo["limite"]
             except Exception:
                 restantes = 0
-                limite = 5
+                limite = 10
                 st.warning("No se pudo verificar el cupo disponible.")
 
             with st.container(border=True):
@@ -803,12 +803,33 @@ def render_profile():
                         key="consultation_email",
                     )
 
-                    enviado = st.form_submit_button(
-                        "✦ Consultar a la IA",
-                        use_container_width=True,
-                        type="primary",
-                        disabled=restantes <= 0,
-                    )
+
+                    if restantes > 0:
+                        enviado = st.form_submit_button(
+                            "✦ Consultar a la IA",
+                            use_container_width=True,
+                            type="primary",
+                        )
+                    else:
+                        enviado = False
+                        st.markdown(
+                            """
+                            <div style="
+                                background:#FFF8E1;
+                                border:1px solid #E9D28C;
+                                border-left:4px solid #E0A800;
+                                border-radius:9px;
+                                padding:12px 14px;
+                                color:#1F2937;
+                                font-size:.86rem;
+                                font-weight:650;
+                                text-align:center;">
+                                Has alcanzado tu límite de consultas por hoy.
+                                Podrás realizar nuevas consultas mañana.
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
             # ===== PROCESAMIENTO DE LA CONSULTA =====
             if enviado:

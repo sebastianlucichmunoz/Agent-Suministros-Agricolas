@@ -22,7 +22,7 @@ load_dotenv()
 
 MODELOS_A_PROBAR = [m.strip() for m in os.getenv("GEMINI_CONSULTATION_MODELS", "gemini-3.5-flash-lite,gemini-3.5-flash").split(",") if m.strip()]
 MAX_OUTPUT_TOKENS = 2200
-MAX_CONSULTAS_DIARIAS = 5
+MAX_CONSULTAS_DIARIAS = 10
 MAX_INSUMOS = 5
 MAX_PROGRAMADAS_POR_DIA = 10
 ZONA_LOCAL = ZoneInfo("America/Lima")
@@ -228,13 +228,24 @@ def ejecutar_consulta(cliente_id, insumos, pregunta, enviar_correo=False):
             "Si faltan datos, explica brevemente la limitación, pero desarrolla el análisis "
             "que sí sea posible con la información disponible. "
 
-            "REDACCIÓN: Personaliza la respuesta con el nombre y ocupación del usuario. "
-            "respuesta_ia debe comenzar exactamente con el tratamiento y nombre proporcionados "
-            "(por ejemplo, Querida Ana:). Primero responde la pregunta, después presenta "
-            "los precios, comparaciones, cálculos y fechas relevantes, justificando la recomendación. "
-            "Utiliza un lenguaje profesional, natural y fácil de comprender. "
-            "Adapta la profundidad a la complejidad: respuesta breve para consultas sencillas "
-            "y análisis más desarrollado para comparaciones o inversiones, sin repeticiones innecesarias. "
+            "REDACCIÓN Y CLARIDAD: Personaliza la respuesta con el nombre y ocupación "
+            "del usuario. respuesta_ia debe comenzar exactamente con el saludo indicado "
+            "(ej. Querida Ana:). Usa un lenguaje sencillo, profesional y cercano, "
+            "evitando tecnicismos y explicando los resultados de forma práctica. "
+
+            "FECHAS: Escribe las fechas naturalmente en español, por ejemplo, "
+            "'15 de febrero de 2027'. Indica siempre el año y evita formatos numéricos "
+            "o expresiones ambiguas como 'el próximo año'. "
+
+            "ESTRUCTURA: Responde primero a la pregunta. Después explica los precios, "
+            "cambios previstos y fechas importantes. En comparaciones o inversiones, "
+            "destaca las diferencias y la alternativa más conveniente según los datos. "
+            "Usa cifras relevantes, redondea precios cuando corresponda y respeta "
+            "las unidades comerciales. Evita repetir información. "
+
+            "EXTENSIÓN: Adapta la respuesta a la consulta: breve para preguntas simples "
+            "y de dos a cuatro párrafos cortos para análisis complejos. "
+            "Aclara una sola vez que las proyecciones son estimaciones inciertas. "
 
             "FORMATO: Devuelve exclusivamente JSON válido con dos cadenas: "
             "respuesta_ia y accion_prioritaria. "
@@ -249,7 +260,7 @@ def ejecutar_consulta(cliente_id, insumos, pregunta, enviar_correo=False):
                 default=str
             )
         )
-        
+
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("Falta configurar GEMINI_API_KEY.")
