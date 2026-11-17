@@ -1,204 +1,238 @@
 # Agent-Suministros-Agricolas
 
-Sistema multiagente con Big Data de apoyo a la toma de decisiones para el monitoreo y predicción de la dinámica en la cadena de suministro agrícola.
+**Plataforma de análisis y apoyo a decisiones para el abastecimiento agrícola**, desarrollada como proyecto académico / producto mínimo viable (PMV).
 
-> **Proyecto Académico / PMV:** Plataforma integral basada en aprendizaje automático y agentes de Inteligencia Artificial para el análisis continuo de commodities agrícolas e insumos clave en la cadena de suministro.
+Integra cotizaciones históricas, modelos predictivos de Machine Learning, un asesor basado en Google Gemini y un dashboard web en Streamlit. Su finalidad es ayudar a comprender cómo podrían variar los precios de insumos agrícolas y evaluar decisiones de compra, venta y abastecimiento.
 
----
+> **Alcance:** Los precios y pronósticos son información de apoyo, no garantías de rentabilidad ni asesoramiento financiero personalizado. Los resultados dependen de la disponibilidad y actualización de los datos.
 
-## Arquitectura del Sistema
+## 1. Funcionalidades principales
+
+### Panel de mercado
+
+- Seguimiento de **11 productos**: maíz, trigo, soya, arroz, avena, café, cacao, azúcar, algodón, petróleo WTI y gas natural.
+- Consulta de la **última cotización disponible**, con fecha, precio y unidad comercial del producto.
+- Gráfico interactivo que une **histórico de precios y proyección de hasta seis meses**, con una marca de la última cotización.
+- Tarjetas de evaluación del modelo: **R²**, **WAPE**, **MAE** y **precisión direccional**, explicadas de forma sencilla.
+- Dictámenes del agente de análisis de mercado y recomendaciones orientadas a decisiones de abastecimiento.
+- Navegación y visualización adaptadas al perfil del usuario.
+
+### Usuarios y consultas personalizadas
+
+- Registro e inicio de sesión, perfil empresarial e insumos de interés.
+- Dos modalidades independientes de consulta a la IA:
+  - **Instantáneas:** generan una respuesta en el momento y permiten solicitar una copia por correo.
+  - **Programadas:** se registran para su procesamiento y posterior entrega por correo, con referencia operativa a las **8:00 a. m. de Lima**.
+- Selección de hasta **cinco insumos** por consulta.
+- Cupo diario de consultas instantáneas y límite independiente de consultas programadas; el contador utiliza la zona horaria **America/Lima**.
+- Aviso claro cuando se agota el cupo diario.
+- Historial de consultas con pregunta, respuesta, acción prioritaria y estado; filtros por mes y año.
+- Correo en formato HTML con **pregunta realizada, respuesta del asesor y acción prioritaria**.
+
+### Asesor agrícola con Gemini
+
+El agente responde consultas de precios y evolución futura, comparaciones entre productos, oportunidades de compra o venta, presupuestos y escenarios económicos aproximados. Cuando el usuario aporta un capital, una cantidad o un plazo, puede analizar su impacto usando los datos disponibles.
+
+Las respuestas priorizan la pregunta del usuario, explican las fechas de manera natural y utilizan lenguaje comprensible. El agente distingue las **variaciones de valor estimadas** de las **ganancias netas**, que requieren información adicional sobre costos y condiciones comerciales. No inventa cotizaciones, conversiones ni datos de producción, clima o calidad.
+
+## 2. Arquitectura general
 
 ```text
-Yahoo Finance (yfinance) ──┐
-                           ├── Python ETL ── MongoDB Atlas ── Streamlit (Dashboard Web)
-RSS & Portales Agro ───────┤       │               │
-                           │       ├── XGBoost     └── GitHub Actions (Automatización Daily)
-                           └── NLTK / VADER
-                                  │
-                                  ├── Agente Recomendador (Gemini AI) ── Dictámenes Macro
-                                  └── Agente de Alertas (SMTP) ─────── Notifications & Email
-Insumos y Commodities Monitoreados
+Yahoo Finance / yfinance
+          │
+          ▼
+   Extracción y ETL ───────────────┐
+          │                        │
+          ▼                        ▼
+     MongoDB Atlas          Datos y cotizaciones
+          │
+          ├── Modelo predictivo (XGBoost / alternativas evaluadas)
+          │       └── Proyecciones y métricas de evaluación
+          │
+          ├── Agente de análisis general (Gemini)
+          │       └── Dictámenes de mercado
+          │
+          └── Agente de consultas (Gemini)
+                  ├── Consultas instantáneas
+                  └── Consultas programadas ── SMTP / correo
+          │
+          ▼
+     Streamlit (dashboard y perfil de usuario)
 
-El sistema monitorea en tiempo real e históricamente 11 commodities estratégicos para la cadena de agro-suministros.
+GitHub Actions: automatización de extracción, predicciones y agentes
+```
 
-Granos y Cereales
-Maíz (corn)
-Trigo (wheat)
-Soya (soybeans)
-Arroz (rice)
-Avena (oats)
-Insumos y Energía
-Gas Natural / Fertilizantes (natural_gas_fertilizer)
-Petróleo Crudo / Transporte (crude_oil_transport)
-Cultivos y Agroindustria
-Café (coffee)
-Cacao (cocoa)
-Azúcar (sugar)
-Algodón (cotton)
-Colecciones en MongoDB Atlas
+El proyecto contempla además el procesamiento de noticias y sentimiento como información complementaria del ecosistema; las recomendaciones basadas en precios deben sustentarse en los datos cuantitativos disponibles.
 
-El esquema estandarizado utiliza asset_id como clave primaria en las siguientes colecciones:
+## 3. Tecnologías
 
-Colección	Descripción
-assets	Metadata de insumos y commodities.
-market_snapshots	Estado actual de cotizaciones.
-ohlcv	Serie de tiempo de precios: Apertura, Máximo, Mínimo, Cierre y Volumen.
-news	Noticias del sector con análisis de sentimiento NLP.
-models	Artefactos de los modelos de Machine Learning.
-model_metrics	Métricas de rendimiento de los modelos: RMSE, MAE y R².
-predictions	Proyecciones de precio a corto plazo generadas por XGBoost.
-pipeline_runs	Logs de ejecución del orquestador.
-Sistema Multiagente y Big Data
+| Componente | Tecnología |
+|---|---|
+| Aplicación web y visualizaciones | Python, Streamlit, Plotly |
+| Extracción de cotizaciones | yfinance |
+| Almacenamiento | MongoDB Atlas (PyMongo) |
+| Modelos predictivos | XGBoost y modelos de comparación, según configuración |
+| Asesor y dictámenes | Google Gemini API |
+| Envío de respuestas | SMTP |
+| Ejecuciones automáticas | GitHub Actions |
+| Procesamiento complementario de noticias | RSS y análisis de sentimiento, cuando esté habilitado |
 
-El sistema integra agentes especializados para la toma de decisiones.
+## 4. Modelo predictivo
 
-Agente de Análisis Macro
+El sistema utiliza series históricas de precios e indicadores derivados, como retornos, medias móviles, volatilidad y medidas de comportamiento del mercado. Genera estimaciones con un horizonte de hasta **180 días** y realiza evaluaciones temporales por producto y horizonte.
 
-Tecnología: Google Gemini AI
+Los resultados se presentan mediante cuatro indicadores:
 
-Evalúa:
+| Indicador | Interpretación |
+|---|---|
+| **R²** | Qué tan bien se ajustan los valores estimados a los observados; no es un porcentaje de aciertos. |
+| **WAPE** | Magnitud del error porcentual de las estimaciones. |
+| **MAE** | Diferencia promedio entre precios estimados y reales, en la unidad monetaria correspondiente. |
+| **Precisión direccional** | Frecuencia con la que se anticipó correctamente una subida o bajada. |
 
-Métricas de mercado.
-Sentimiento de noticias.
-Predicciones cuantitativas.
+Las métricas históricas no garantizan que las proyecciones futuras tengan el mismo desempeño. Las unidades comerciales se respetan en cada producto para evitar comparaciones engañosas.
 
-Con esta información genera dictámenes ejecutivos sobre la tendencia de la cadena de suministro.
+## 5. Agentes y módulos del proyecto
 
-Agente de Alertas y Notificaciones
+```text
+app.py
+src/
+  agents/
+    batch_agent.py
+    consultation_agent.py
+    scheduled_consultations.py
+    email_sender.py
+  data/
+    extractor.py
+  ml/
+    model.py
+.github/
+  workflows/
+    refresh.yml
+```
 
-Tecnología: SMTP
+- **`app.py`:** dashboard, visualizaciones, autenticación, perfil, consultas e historial.
+- **`batch_agent.py`:** análisis general de los insumos y generación de dictámenes para el panel.
+- **`consultation_agent.py`:** consultas instantáneas, contexto de precios y pronósticos, límites y registro de consultas programadas.
+- **`scheduled_consultations.py`:** recuperación y procesamiento de consultas pendientes y envío de respuestas.
+- **`email_sender.py`:** correo HTML y conexión SMTP; incluye la pregunta original cuando el módulo que lo llama la proporciona.
+- **`extractor.py`:** preparación de datos consolidados para análisis.
+- **`model.py`:** entrenamiento, evaluación y generación de proyecciones.
 
-Evalúa variaciones atípicas de precios y dispara boletines por correo electrónico en caso de fluctuaciones severas en el mercado.
+## 6. Colecciones principales de MongoDB
 
-Frecuencia y Automatización
+| Colección | Propósito |
+|---|---|
+| `assets_catalog` | Información y unidades de los productos. |
+| `ohlcv` | Precios históricos y cotizaciones. |
+| `predictions` | Predicciones de precios por producto. |
+| `model_metrics` | Métricas de evaluación de los modelos. |
+| `agent_recommendations` | Dictámenes generales del agente de mercado. |
+| `agent_logs` | Registros técnicos de las ejecuciones de los agentes. |
+| `clientes_` | Usuarios y perfiles empresariales. |
+| `consultas_ia` | Preguntas, respuestas, consultas programadas y estados de procesamiento. |
+| `consulta_cupos` | Control de consultas instantáneas y programadas. |
 
-El workflow:
+## 7. Instalación local
 
-.github/workflows/refresh.yml
+**Requisitos:** Python, acceso a MongoDB Atlas y claves para los servicios que se utilizarán.
 
-automatiza la ingesta, el reentrenamiento y la ejecución de los agentes en la nube mediante una programación cron ajustada a la hora de Lima (PET).
-
-Hora Lima (PET)	Hora UTC	Evento
-07:00 AM	12:00 UTC	Ingesta + Predicciones + Agentes
-04:00 PM	21:00 UTC	Actualización de Mercado
-06:30 PM	23:30 UTC	Cierre de Mercado y Dictamen Diario
-Instalación y Ejecución Local
-1. Clonar el repositorio
+```bash
 git clone https://github.com/sebastianlucichmunoz/Agent-Suministros-Agricolas.git
 cd Agent-Suministros-Agricolas
-2. Crear el entorno virtual
 python -m venv .venv
-.venv\Scripts\activate
-3. Instalar dependencias
+```
+
+Activar el entorno virtual:
+
+```powershell
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+```bash
+# Linux / macOS
+source .venv/bin/activate
+```
+
+Instalar las dependencias:
+
+```bash
 python -m pip install -r requirements.txt
-Variables de Entorno
+```
 
-Crea un archivo .env en la raíz del proyecto con la siguiente estructura:
+Crear el archivo `.env` en la raíz del proyecto:
 
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/
+```dotenv
+MONGODB_URI=mongodb+srv://USUARIO:CONTRASENA@CLUSTER.mongodb.net/
 MONGODB_DB_NAME=agri_analytics_db
-GEMINI_API_KEY=tu_gemini_api_key
+GEMINI_API_KEY=TU_CLAVE_GEMINI
 
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu_correo@gmail.com
-SMTP_PASS=tu_app_password
-EMAIL_FROM=tu_correo@gmail.com
+SMTP_PASSWORD=tu_contrasena_de_aplicacion
+```
 
-No publiques el archivo .env ni las credenciales reales en el repositorio.
+> **Seguridad:** Nunca subir `.env`, contraseñas o claves de API al repositorio. El nombre de variable utilizado por el código del correo es `SMTP_PASSWORD`.
 
-Comandos de Ejecución
-Ejecutar ingesta y ETL local
-python scripts/refresh.py
-Ejecutar corrida diaria completa con reentrenamiento ML
-python scripts/refresh.py --daily
-Ejecutar el Agente de Recomendaciones Macro
-python -m src.agents.recommendation_agent
-Desplegar el Dashboard localmente
+Iniciar la aplicación:
+
+```bash
 streamlit run app.py
-Modelo de Machine Learning y Umbrales
-Target
+```
 
-Predicción del precio de cierre para el siguiente periodo, aproximadamente 24 horas.
+## 8. Ejecución de agentes y automatización
 
-Variables utilizadas
+Ejecutar el análisis general:
 
-Las principales variables o features utilizadas por el modelo son:
+```bash
+python -m src.agents.batch_agent
+```
 
-Retornos acumulados de 1d, 3d, 7d y 14d.
-Medias móviles MA 7/14/30.
-Medias móviles exponenciales EMA 7/21.
-RSI 14.
-Volatilidad acumulada.
-Score de sentimiento diario derivado del NLP.
-Clasificación de Tendencia
-Tendencia	Condición
-ALCISTA	Variación > +0.50%
-ESTABLE	Variación entre -0.50% y +0.50%
-BAJISTA	Variación < -0.50%
-GitHub Actions Secrets Obligatorios
+Ejecutar únicamente el procesamiento de consultas programadas:
 
-En el repositorio de GitHub, accede a:
+```bash
+python -m src.agents.scheduled_consultations
+```
 
-Settings > Secrets and variables > Actions
+El flujo automatizado se administra mediante **`.github/workflows/refresh.yml`**. Para mantener la información consistente conviene que el procesamiento de dictámenes ocurra después de actualizar las cotizaciones y predicciones. Las consultas programadas requieren una ejecución a las **13:00 UTC (8:00 a. m. de Lima)** o posteriormente, de acuerdo con la configuración del workflow.
 
-y configura los siguientes Secrets:
+> GitHub Actions puede comenzar una ejecución programada con retraso. La hora indicada es una referencia de programación, no una garantía de recepción exacta del correo.
 
-MONGODB_URI
-MONGODB_DB_NAME
-GEMINI_API_KEY
-SMTP_SERVER
-SMTP_PORT
-SMTP_USER
-SMTP_PASS
-EMAIL_FROM
+### Límites de consultas
 
-Estos valores permiten que GitHub Actions ejecute los procesos automatizados sin exponer las credenciales directamente en el código fuente.
+Los límites se administran en `src/agents/consultation_agent.py`:
 
-Despliegue Web con Streamlit Cloud
+```python
+MAX_CONSULTAS_DIARIAS = 10
+MAX_PROGRAMADAS_POR_DIA = 10
+```
 
-Para publicar el dashboard interactivo en la web mediante Streamlit Community Cloud:
+La configuración anterior representa **10 consultas instantáneas al día por usuario y 10 programadas por fecha de entrega**. Verifica que estos valores estén efectivamente aplicados en la versión desplegada: modificar el README no modifica el código. Los formularios también deben reflejar los mismos límites.
 
-Conecta el repositorio Agent-Suministros-Agricolas en Streamlit Community Cloud.
-Configura los Secrets correspondientes a la conexión con MongoDB Atlas.
-Utiliza la siguiente configuración:
-MONGODB_URI = "tu_uri_de_mongodb_atlas"
-MONGODB_DB_NAME = "agri_analytics_db"
+Para que el correo muestre la pregunta original, tanto las consultas instantáneas como las programadas deben llamar a `send_notification_email(...)` incluyendo el argumento `pregunta=`.
 
-El dashboard utilizará estas variables para conectarse a MongoDB Atlas.
+## 9. Despliegue en Streamlit Community Cloud
 
-Flujo General del Sistema
-Yahoo Finance + RSS + Portales Agro
-                │
-                ▼
-           Python ETL
-                │
-                ├── NLTK / VADER
-                │
-                ▼
-          MongoDB Atlas
-                │
-        ┌───────┴────────┐
-        │                │
-        ▼                ▼
-      XGBoost       Datos de Mercado
-        │                │
-        ▼                │
-    Predicciones         │
-        │                │
-        └───────┬────────┘
-                ▼
-         Agentes IA
-        ┌───────┴────────┐
-        ▼                ▼
-   Gemini AI          SMTP
-        │                │
-        ▼                ▼
- Dictamen Macro    Alertas Email
-        │                │
-        └───────┬────────┘
-                ▼
-          Streamlit
-          Dashboard
+1. Publicar el repositorio en GitHub.
+2. Crear la aplicación en Streamlit Community Cloud y seleccionar `app.py`.
+3. Configurar los secretos de MongoDB, Gemini y SMTP en un formato compatible con las variables de entorno del proyecto.
+4. Autorizar la conexión a MongoDB Atlas desde el entorno de despliegue.
+5. Verificar autenticación, lectura de cotizaciones, consultas, historial y correos.
 
-Esta versión **no utiliza emojis ni elementos que den una apariencia artificial**, y conserva un estilo bastante normal para un README académico/técnico de GitHub.
+En **GitHub Actions → Settings → Secrets and variables → Actions**, configurar las credenciales necesarias para los trabajos automatizados. No añadirlas directamente a los archivos YAML.
+
+## 10. Comprobaciones recomendadas
+
+- Confirmar que la fecha de última cotización y la fecha de generación de la predicción sean coherentes.
+- Verificar las cuatro métricas por producto, sus unidades y el horizonte evaluado.
+- Probar consultas simples, comparaciones de insumos y preguntas con presupuestos.
+- Confirmar el cupo diario con la hora de Lima y el aviso de límite alcanzado.
+- Programar una consulta y revisar su transición entre estados (`Programada`, `Procesando`, `Completado` o `Error`).
+- Comprobar la recepción del correo con **pregunta, respuesta y acción prioritaria**.
+- Revisar la ejecución real de los workflows y los registros de agentes.
+
+---
+
+**Estado del proyecto:** PMV académico en evolución. La calidad de las decisiones sugeridas depende de la actualización, disponibilidad y precisión de los datos y de los modelos empleados.
