@@ -338,8 +338,20 @@ st.markdown("""
 [data-testid="stSidebar"] div[data-baseweb="select"] > div:hover {background:#1E4058!important;border-color:#55C38A!important}
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {font-size:.95rem!important}
 @media(max-width:800px){.agro-header {grid-template-columns:75px 1fr;gap:10px;padding:12px}.agro-header-image{width:75px;height:65px}.agro-header-leaf{display:none}.agro-header-text h1{font-size:1.18rem}.agro-header-text p{font-size:.72rem}.market-title{font-size:1.35rem}}
+
+
+/* ===== TÍTULOS BLANCOS DE ACCESO Y REGISTRO ===== */
+div[data-testid="stDialog"] [role="dialog"] h2:first-of-type,
+div[data-testid="stDialog"] [role="dialog"] h2:first-of-type *,
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stDialogHeader"] *,
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stDialogTitle"] {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ===== AJUSTES VISUALES PARA EL GRÁFICO Y EL PERFIL =====
@@ -361,15 +373,19 @@ st.markdown("""
 [data-testid="stMain"] [data-testid="stPlotlyChart"] {background:#FFFFFF;border:1px solid #DFE8F0;border-radius:13px;padding:8px 4px;}
 [data-testid="stMain"] [data-testid="stPlotlyChart"] .legendtext {fill:#173454 !important;}
 /* ===== LEGIBILIDAD DE ACCESO Y REGISTRO ===== */
-div[data-testid="stDialog"] [role="dialog"] h1,
-div[data-testid="stDialog"] [role="dialog"] h2,
-div[data-testid="stDialog"] [role="dialog"] h3,
+
+/* ===== TEXTOS INTERNOS DE ACCESO Y REGISTRO ===== */
+div[data-testid="stDialog"] label,
+div[data-testid="stDialog"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stDialog"] [data-testid="stMarkdownContainer"] h3 {
+    color: #12304A !important;
+}
+/* ===== TEXTOS INTERNOS DE ACCESO Y REGISTRO ===== */
 div[data-testid="stDialog"] [role="dialog"] label,
 div[data-testid="stDialog"] [role="dialog"] label p,
-div[data-testid="stDialog"] [role="dialog"] [data-testid="stCaptionContainer"] p,
-div[data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] p {
-    color:#123453 !important;
-    -webkit-text-fill-color:#123453 !important;
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stCaptionContainer"] p {
+    color: #123453 !important;
+    -webkit-text-fill-color: #123453 !important;
 }
 div[data-testid="stDialog"] [role="dialog"] > div,
 div[data-testid="stDialog"] [role="dialog"] [data-testid="stForm"] {background:#FFFFFF !important;}
@@ -403,8 +419,29 @@ div[data-testid="stDialog"] [role="dialog"] button[data-testid="stBaseButton-sec
 [data-testid="stMain"] [data-testid="stExpander"] summary,
 [data-testid="stMain"] [data-testid="stExpander"] summary:hover {background:#FFFFFF !important;}
 [data-testid="stMain"] [data-testid="stExpander"] summary p {color:#17436A !important;-webkit-text-fill-color:#17436A !important;}
-
 @media(max-width:850px){.agro-header {grid-template-columns:90px 1fr !important;}.agro-header-image{width:85px !important;height:65px !important;}}
+
+/* ===== DISTRIBUCIÓN VERTICAL DE LAS MÉTRICAS ===== */
+.metric-side {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 470px !important;
+}
+.metric-side .metric-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 105px !important;
+    margin: 8px 0 !important;
+}
+
+/* ===== TÍTULO BLANCO DEL DIÁLOGO ===== */
+div[data-testid="stDialog"] h2[slot="title"] p {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1451,6 +1488,7 @@ with metric_col:
     dir_result = mejores_direccion[1] if mejores_direccion else None
 
 
+
     tarjetas = "".join([
         metric_card(
             "Precisión de la predicción",
@@ -1467,18 +1505,13 @@ with metric_col:
             display_money(mae, conversion) if mae is not None else "N/D",
             "Error absoluto medio (MAE)"
         ),
-        metric_card(
-            "¿Acertó la subida o bajada?",
-            f"{dir_result:.1f}%" if dir_result is not None else "N/D",
-            "Precisión direccional"
-        ),
     ])
+
 
     st.markdown(
         f'<div class="metric-side"><h3>📊 ¿Cómo rindió el modelo?</h3>'
         f'<div class="context">Resultados de las pruebas históricas</div>{tarjetas}'
-        f'<div class="metric-foot">Cada indicador corresponde al horizonte señalado. R² no representa probabilidad de acierto.</div>'
-        f'<div class="metric-foot">Evaluado: {format_day(metrics_doc.get("trained_at"))}</div></div>',
+        f'<div class="metric-foot">Cada indicador corresponde al horizonte señalado.</div>',
         unsafe_allow_html=True,
     )
     if not metrics_doc:
@@ -1486,7 +1519,7 @@ with metric_col:
 
 # ===== NOTICIAS RECIENTES EN SECCIÓN INDEPENDIENTE =====
 st.markdown('<div class="dashboard-panel-title" style="margin-top:25px">📰 Noticias recientes del mercado</div>', unsafe_allow_html=True)
-st.markdown('<div class="dashboard-panel-subtitle">Titulares informativos relacionados con el insumo seleccionado; no intervienen en el modelo predictivo</div>', unsafe_allow_html=True)
+st.markdown('<div class="dashboard-panel-subtitle">Titulares informativos relacionados con el insumo seleccionado</div>', unsafe_allow_html=True)
 
 if news_docs:
     visible_news = news_docs[:6]
