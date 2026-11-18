@@ -357,14 +357,18 @@ def ejecutar_consulta(cliente_id, insumos, pregunta, enviar_correo=False):
                 insumos=[d["insumo"] for d in datos],
                 respuesta=resultado["respuesta_ia"],
                 accion=resultado["accion_prioritaria"],
+                pregunta=pregunta,
             )
-            db.consultas_ia.update_one({"consulta_id": consulta_id}, {"$set": {"correo_enviado": bool(enviado)}})
+            db.consultas_ia.update_one(
+                {"consulta_id": consulta_id},
+                {"$set": {"correo_enviado": bool(enviado)}}
+            )
             resultado["correo_enviado"] = bool(enviado)
         except Exception:
             resultado["correo_enviado"] = False
+
     resultado.pop("_id", None)
     return resultado
-
 
 # ===== INDICADOR CONTEXTUAL DEL DESEMPEÑO DEL MODELO =====
 def resumen_r2_insumos(db, insumos):
