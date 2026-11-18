@@ -77,7 +77,7 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
     Considera la magnitud del cambio, su duración, las posibles fluctuaciones intermedias y la incertidumbre. No recomiendes esperar únicamente porque el precio podría bajar si el ahorro sería mínimo o el riesgo de encarecimiento es importante. Si las señales son contradictorias, prioriza la prudencia.
 
     4. REDACCIÓN CLARA Y AMIGABLE:
-    - En 'resumen_ejecutivo', comienza directamente describiendo cómo podría evolucionar el precio durante los próximos meses. Destaca los periodos de mayor aumento o reducción, los valores futuros más relevantes y el momento de compra más conveniente. No comiences mencionando la cotización actual.
+    - En 'resumen_ejecutivo', comienza siempre mencionando explícitamente el nombre del producto, utilizando una expresión natural como "El precio del azúcar...", "El precio del maíz..." o "El precio del trigo...". Después explica cómo podría evolucionar durante los próximos meses, destacando los aumentos, reducciones, fechas importantes y oportunidades de compra. No comiences mencionando unidades comerciales como "por libra", "por bushel" o "por barril", ni incluyas la cotización actual. Las unidades comerciales deben aparecer únicamente cuando acompañen valores de precios futuros estimados.
     - En 'justificacion', explica por qué recomiendas comprar anticipadamente, mantener o postergar las compras. Considera los cambios esperados, su importancia económica y los posibles beneficios o riesgos de cada alternativa, sin repetir el precio actual.
     - Evita palabras técnicas como "commodity", "pico", "valle", "tendencia alcista/bajista" dentro de las explicaciones. Utiliza expresiones como "el precio podría subir", "se espera una reducción" o "la variación sería pequeña". Es importante que todo se explique de forma amigable y práctica.
     - Personaliza cada recomendación según los datos del producto. No asumas que el comprador tiene capacidad de almacenamiento, presupuesto disponible o libertad para aplazar sus compras.
@@ -95,7 +95,7 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
     "recomendacion": "MANTENER",
     "nivel_riesgo": "Medio",
     "tendencia": "ESTABLE",
-    "resumen_ejecutivo": "Explicación sencilla de la evolución futura del precio, los cambios más importantes, sus fechas y el momento de compra más conveniente, sin mencionar la cotización actual.",
+    "resumen_ejecutivo": "Comienza con 'El precio del [nombre del producto]...' y explica su evolución futura, los principales cambios, las fechas relevantes y el momento de compra conveniente. No incluyas la cotización actual ni comiences con unidades comerciales.",
     "justificacion": "Motivo de la recomendación, comparación de alternativas y ahorro o riesgo económico estimado."
     }}
 
