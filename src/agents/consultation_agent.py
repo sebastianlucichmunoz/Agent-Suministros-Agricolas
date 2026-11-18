@@ -224,7 +224,7 @@ def ejecutar_consulta(cliente_id, insumos, pregunta, enviar_correo=False):
             "No inventes precios, fechas, porcentajes, conversiones, costos ni beneficios garantizados. "
             "Las cotizaciones están expresadas en USD por la unidad comercial indicada. "
             "Respeta siempre esa unidad y expresa los cálculos monetarios con claridad. "
-            "Las proyecciones son estimaciones inciertas, no resultados asegurados. "
+            "Presenta los valores futuros como precios estimados, diferenciándolos de las cotizaciones actuales. "
             "Si faltan datos, explica brevemente la limitación, pero desarrolla el análisis "
             "que sí sea posible con la información disponible. "
 
@@ -245,7 +245,7 @@ def ejecutar_consulta(cliente_id, insumos, pregunta, enviar_correo=False):
 
             "EXTENSIÓN: Adapta la respuesta a la consulta: breve para preguntas simples "
             "y de dos a cuatro párrafos cortos para análisis complejos. "
-            "Aclara una sola vez que las proyecciones son estimaciones inciertas. "
+            "Evita advertencias repetitivas y prioriza las conclusiones útiles para el usuario. "
 
             "FORMATO: Devuelve exclusivamente JSON válido con dos cadenas: "
             "respuesta_ia y accion_prioritaria. "
