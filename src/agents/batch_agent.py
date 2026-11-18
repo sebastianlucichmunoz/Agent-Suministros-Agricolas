@@ -67,8 +67,8 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
 
     INSTRUCCIONES:
 
-    1. ANÁLISIS: Prioriza el bloque cotizacion_verificada para precios, fechas, unidades y estimaciones. Si difiere de otros campos, utiliza exclusivamente el dato verificado. Utiliza exclusivamente los datos cuantitativos proporcionados. Evalúa el precio actual, su evolución histórica, las variaciones y las proyecciones disponibles. No utilices noticias, opiniones externas ni sentimiento del mercado.
-    2. PRECIOS Y FECHAS: Menciona el precio actual y su unidad comercial exacta. Explica cuánto podría subir o bajar, en dólares y porcentaje cuando sea posible, e identifica las fechas relevantes. No inventes datos ni conversiones. Presenta las proyecciones como estimaciones, nunca como certezas.
+    1. ANÁLISIS: Prioriza el bloque cotizacion_verificada para precios, fechas, unidades y estimaciones. Si difiere de otros campos, utiliza exclusivamente el dato verificado. Utiliza exclusivamente los datos cuantitativos proporcionados. Evalúa internamente el precio actual como referencia, pero no lo menciones en el resumen ejecutivo ni en la justificación. Centra las explicaciones en la evolución prevista, las variaciones y las oportunidades de compra. No utilices noticias, opiniones externas ni sentimiento del mercado.
+    2. PRECIOS Y FECHAS: No menciones ni reproduzcas la cotización actual, ya que se presenta por separado en el dashboard. Explica los precios futuros estimados, cuánto podrían subir o bajar en dólares y porcentaje cuando sea posible, e identifica las fechas relevantes. Respeta siempre la unidad comercial indicada y evita conversiones no proporcionadas. Presenta las proyecciones como estimaciones, nunca como certezas.
     3. RECOMENDACIÓN DE COMPRA:
     - COMPRAR ANTICIPADO: si se prevé un encarecimiento relevante que justifique comprar antes.
     - MANTENER: si las variaciones son pequeñas, inciertas o no justifican cambiar el momento de compra.
@@ -77,8 +77,8 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
     Considera la magnitud del cambio, su duración, las posibles fluctuaciones intermedias y la incertidumbre. No recomiendes esperar únicamente porque el precio podría bajar si el ahorro sería mínimo o el riesgo de encarecimiento es importante. Si las señales son contradictorias, prioriza la prudencia.
 
     4. REDACCIÓN CLARA Y AMIGABLE:
-    - En 'resumen_ejecutivo', comienza con el precio actual y explica, con palabras sencillas, qué podría ocurrir durante los próximos meses y cuándo convendría comprar.
-    - En 'justificacion', explica por qué recomiendas comprar ahora, esperar o dividir las compras. Traduce las variaciones en su impacto económico por unidad comercial y por volumen cuando se conozca.
+    - En 'resumen_ejecutivo', comienza directamente describiendo cómo podría evolucionar el precio durante los próximos meses. Destaca los periodos de mayor aumento o reducción, los valores futuros más relevantes y el momento de compra más conveniente. No comiences mencionando la cotización actual.
+    - En 'justificacion', explica por qué recomiendas comprar anticipadamente, mantener o postergar las compras. Considera los cambios esperados, su importancia económica y los posibles beneficios o riesgos de cada alternativa, sin repetir el precio actual.
     - Evita palabras técnicas como "commodity", "pico", "valle", "tendencia alcista/bajista" dentro de las explicaciones. Utiliza expresiones como "el precio podría subir", "se espera una reducción" o "la variación sería pequeña". Es importante que todo se explique de forma amigable y práctica.
     - Personaliza cada recomendación según los datos del producto. No asumas que el comprador tiene capacidad de almacenamiento, presupuesto disponible o libertad para aplazar sus compras.
     - Si los cambios previstos son mínimos, indícalo claramente y explica si realmente vale la pena modificar el plan de compra.
@@ -95,7 +95,7 @@ def analizar_mercado_agricola_en_lote(lista_activos: list):
     "recomendacion": "MANTENER",
     "nivel_riesgo": "Medio",
     "tendencia": "ESTABLE",
-    "resumen_ejecutivo": "Explicación sencilla del precio actual, su unidad, los cambios esperados y el momento de compra más conveniente.",
+    "resumen_ejecutivo": "Explicación sencilla de la evolución futura del precio, los cambios más importantes, sus fechas y el momento de compra más conveniente, sin mencionar la cotización actual.",
     "justificacion": "Motivo de la recomendación, comparación de alternativas y ahorro o riesgo económico estimado."
     }}
 
