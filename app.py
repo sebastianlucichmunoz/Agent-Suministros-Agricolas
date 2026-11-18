@@ -660,34 +660,44 @@ def cargar_evaluacion_insumos(ids):
     return resumen_r2_insumos(get_db(), list(ids))
 
 
+
+# ===== EVALUACIÓN SIMPLIFICADA DE LAS PREDICCIONES =====
 def mostrar_evaluacion_consulta(registro):
     insumos = registro.get("insumos", []) or []
     resultados = registro.get("evaluacion_modelo") or cargar_evaluacion_insumos(tuple(insumos))
+
     filas = []
+
     for asset in insumos:
         item = resultados.get(asset) or {}
-        try:
-            valor = float(item["r2"])
-            if not np.isfinite(valor):
-                valor = None
-        except (KeyError, TypeError, ValueError):
-            valor = None
         nombre = escape(INTEREST_NAMES.get(asset, asset))
-        if valor is None:
-            filas.append(f'<div><strong>{nombre}:</strong> sin datos de evaluación.</div>')
+
+        try:
+            r2 = float(item["r2"])
+            if not np.isfinite(r2):
+                continue
+        except (KeyError, TypeError, ValueError):
             continue
-        horizonte = item.get("horizonte_sesiones")
-        periodo = f" · {horizonte} sesión(es)" if horizonte is not None else ""
-        if 0 <= valor <= 1:
-            detalle = f"R² {valor:.3f} · {valor*100:.1f}% de variación explicada"
-        else:
-            detalle = f"R² {valor:.3f}"
-        filas.append(f'<div><strong>{nombre}:</strong> {escape(detalle + periodo)}</div>')
+
+        if 0 <= r2 <= 1:
+            porcentaje = f"{r2 * 100:.1f}%"
+
+            filas.append(
+                f'<div style="padding:6px 0;color:#173454;">'
+                f'📊 <strong>{nombre}:</strong> '
+                f'<strong style="color:#15803D;">{porcentaje}</strong> '
+                f'de confiabilidad de información'
+                f'</div>'
+            )
+
     if filas:
         st.markdown(
-            '<div class="consulta-evaluacion"><strong>📊 Evaluación de los precios estimados</strong>'
-            + ''.join(filas)
-            + '<div style="margin-top:5px;font-size:.74rem;">El R² indica ajuste en las pruebas, no probabilidad de acertar un precio futuro.</div></div>',
+            '<div class="consulta-evaluacion">'
+            '<div style="font-weight:750;color:#126334;margin-bottom:8px;">'
+            '📈 Evaluación de las recomendaciones'
+            '</div>'
+            + "".join(filas)
+            + '</div>',
             unsafe_allow_html=True,
         )
 
